@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="fav-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0050BD"/>
+      <stop offset="100%" stop-color="#002D6C"/>
+    </linearGradient>
+    <linearGradient id="fav-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFB74D"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </linearGradient>
+  </defs>
+  <!-- Background rounded squircle -->
+  <rect x="2" y="2" width="60" height="60" rx="14" fill="url(#fav-bg)"/>
+  
+  <!-- Bus Body -->
+  <rect x="12" y="14" width="40" height="34" rx="6" fill="#FFFFFF"/>
+  <rect x="15" y="18" width="34" height="12" rx="3" fill="#002D6C"/>
+  <!-- Destination display -->
+  <rect x="20" y="15" width="24" height="2.5" rx="1" fill="url(#fav-gold)"/>
+  
+  <!-- Headlights -->
+  <circle cx="19" cy="38" r="3" fill="url(#fav-gold)"/>
+  <circle cx="45" cy="38" r="3" fill="url(#fav-gold)"/>
+  
+  <!-- Grill / Emblem -->
+  <rect x="26" y="36.5" width="12" height="3" rx="1.5" fill="#004098"/>
+  
+  <!-- Wheels -->
+  <rect x="15" y="47" width="8" height="5" rx="2" fill="#1E293B"/>
+  <rect x="41" y="47" width="8" height="5" rx="2" fill="#1E293B"/>
+</svg>

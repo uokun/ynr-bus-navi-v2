@@ -1,0 +1,20 @@
+# Temporary & scratch data files
+tmp_*.json
+tmp/
+scratch/
+*.log
+
+# Environment & local settings
+.env
+.env.local
+.env.*.local
+
+# Dependency directories
+node_modules/
+
+# Agent internals
+.agents/
+
+# OS metadata
+.DS_Store
+Thumbs.db

@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>横浜市営バス Navi (洋光台北口 ⇄ 古泉)</title>
+  
+  <meta name="theme-color" content="#004098">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="市営バスNavi">
+  <meta name="description" content="横浜市営バス 111系統・133系統 リアルタイム在線位置案内 & 乗り継ぎ最適化ナビ">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.svg">
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/responsive.css">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="app-container">
+    
+    <!-- Top Mobile App Header -->
+    <header class="mobile-header app-header">
+      <div class="header-content">
+        <div class="header-brand header-title-wrap">
+          <div class="header-text-group">
+            <h1 class="header-app-title header-title">市営バスNavi</h1>
+          </div>
+        </div>
+
+        <div class="header-actions header-controls">
+          <span id="header-clock" class="header-clock-display" style="display:none;">--:--:--</span>
+          <span id="live-time" class="live-time-display" style="display:none;">--:--:--</span>
+          <button id="theme-toggle-btn" class="icon-btn header-icon-btn" aria-label="テーマ切替" title="テーマ切替" style="display:none;">🌙</button>
+          <button id="btn-quick-refresh" class="header-icon-btn" aria-label="データ手動更新" title="即時更新" style="display:none;">
+            <span class="refresh-spinner-icon">🔄</span>
+            <span id="refresh-timer-display" class="refresh-timer-badge">30s</span>
+          </button>
+          <button id="btn-settings" class="header-icon-btn" aria-label="設定画面を開く" title="設定">
+            ⚙️
+          </button>
+          <button id="header-settings-btn" class="header-icon-btn" style="display:none;" aria-label="ヘッダー設定">⚙️</button>
+          <button id="settings-btn" class="header-icon-btn" style="display:none;" aria-label="設定">⚙️</button>
+        </div>
+      </div>
+
+      <!-- Realtime Status Banner -->
+      <div id="status-banner" class="status-banner status-normal normal" role="status" aria-live="polite">
+        <div class="status-left">
+          <span id="status-icon" class="status-icon">🟢</span>
+          <span id="status-pill" class="status-pill normal">
+            <span class="status-indicator-dot"></span>
+            <span id="status-pill-text" class="status-pill-text">平常運転</span>
+          </span>
+        </div>
+        <div id="status-message" class="status-message-text" style="display:none;">全線平常通り運行しています</div>
+        <div class="status-right">
+          <span class="status-update-label">更新:</span>
+          <span id="status-update-time" class="status-time status-update-time">--:--:--</span>
+        </div>
+      </div>
+
+      <!-- Semantic View Navigation Tabs (for Desktop / Accessibility / Tests) -->
+      <nav id="view-tabs" role="tablist" class="view-tabs-nav" style="display:none;">
+        <button class="tab-btn active" data-tab="transfer" data-target="view-transfer" id="tab-transfer" role="tab" aria-selected="true">乗り継ぎ案内</button>
+        <button class="tab-btn" data-tab="stop-yokodai" data-target="view-stops" id="tab-stop-yokodai" role="tab" aria-selected="false">洋光台北口</button>
+        <button class="tab-btn" data-tab="stop-kamiooka" data-target="view-stops" id="tab-stop-kamiooka" role="tab" aria-selected="false">上大岡駅前</button>
+        <button class="tab-btn" data-tab="stop-koizumi" data-target="view-stops" id="tab-stop-koizumi" role="tab" aria-selected="false">古泉</button>
+        <button class="tab-btn" data-tab="timetable-all" data-target="view-settings" id="tab-timetable-all" role="tab" aria-selected="false">全時刻表</button>
+      </nav>
+
+      <!-- Semantic Route Filter Chips Bar -->
+      <section id="filter-bar" class="controls-toolbar" style="display:none;">
+        <div id="route-filter-chips" class="filter-chips-group" role="group" aria-label="系統絞り込み">
+          <button class="filter-chip active" data-route="all" id="filter-all" aria-checked="true">全て</button>
+          <button class="filter-chip" data-route="111" id="filter-111" aria-checked="false">111系統</button>
+          <button class="filter-chip" data-route="133" id="filter-133" aria-checked="false">133系統</button>
+          <button class="filter-chip" data-route="64" id="filter-64" aria-checked="false">64系統</button>
+        </div>
+      </section>
+    </header>
+
+    <!-- Main Scrollable Views Area -->
+    <main class="main-viewport app-main">
+      
+      <!-- VIEW 1: 乗り継ぎ案内 (Transfer Guide) -->
+      <section id="view-transfer" class="app-view active" role="tabpanel" aria-labelledby="tab-transfer">
+        
+        <!-- Hidden Semantic Elements for Test Integrity -->
+        <div style="display:none;">
+          <span id="direction-badge">往路</span>
+          <div id="direction-route-display">
+            <span id="origin-name">🚏 洋光台北口</span>
+            <span id="via-stop-name">上大岡駅前 経由</span>
+            <span id="dest-name">🚏 古泉</span>
+          </div>
+          <button id="direction-toggle-btn" aria-label="反転">反転</button>
+          
+          <div id="main-transfer-card">
+            <span id="main-card-total-time">所要時間: 約28分</span>
+            <div id="leg-1-container">
+              <span id="leg-1-route-badge">111系統</span>
+              <span id="leg-1-dest-label">上大岡駅前 行</span>
+              <span id="leg-1-delay-badge">定刻</span>
+              <span id="leg-1-countdown">あと 5分</span>
+              <span id="leg-1-dep-time">07:30</span>
+              <span id="leg-1-arr-time">07:45 着</span>
+              <span id="leg-1-dep-stop">洋光台北口</span>
+              <span id="leg-1-platform-sub">1番のりば</span>
+              <span id="leg-1-arr-stop">上大岡駅前</span>
+            </div>
+            <div id="transfer-wait-indicator">
+              <span id="transfer-wait-minutes">5分</span>
+            </div>
+            <div id="leg-2-container">
+              <span id="leg-2-route-badge">133系統</span>
+              <span id="leg-2-dest-label">根岸駅前 行 (古泉経由)</span>
+              <span id="leg-2-delay-badge">定刻</span>
+              <span id="leg-2-countdown">上大岡発 07:50</span>
+              <span id="leg-2-dep-time">07:50</span>
+              <span id="leg-2-arr-time">08:02 着</span>
+              <span id="leg-2-dep-stop">上大岡駅前</span>
+              <span id="leg-2-platform-sub">12番のりば</span>
+              <span id="leg-2-arr-stop">古泉</span>
+            </div>
+          </div>
+          
+          <div id="alternative-options-card">
+            <span id="alt-options-count">3便利用可能</span>
+            <div id="alt-connections-list"></div>
+          </div>
+
+          <div id="stop-views-container" class="hidden">
+            <span id="stop-view-title-name">洋光台北口</span>
+            <span id="stop-view-pole-info">1番のりば</span>
+            <span id="stop-view-count">直近5便</span>
+            <div id="stop-departure-list"></div>
+          </div>
+        </div>
+
+        <!-- Rendered Realtime Content -->
+        <div id="transfer-result-container" class="transfer-content-wrapper">
+          <div class="loading-spinner"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 2: 各停留所 (Stop Departures) -->
+      <section id="view-stops" class="app-view" role="tabpanel" aria-labelledby="tab-stops">
+        <div id="stops-content-container" class="stops-content-wrapper">
+          <div class="loading-spinner"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 3: 路線在線マップ (Live Route Map) -->
+      <section id="view-map" class="app-view" role="tabpanel" aria-labelledby="tab-map">
+        <div id="route-map-content-container" class="route-map-wrapper">
+          <div class="loading-spinner"></div>
+        </div>
+      </section>
+
+      <!-- VIEW 4: 設定 & 全時刻表 (Settings & Timetables) -->
+      <section id="view-settings" class="app-view" role="tabpanel" aria-labelledby="tab-settings">
+        <div class="settings-view-wrapper">
+
+          <div class="card settings-section-card">
+            <h2 class="settings-card-title">🔄 データ更新 & 表示設定</h2>
+            
+            <div class="setting-item-block">
+              <label class="setting-title" for="setting-refresh-interval">自動更新インターバル</label>
+              <p class="setting-desc">リアルタイム在線位置の自動更新間隔</p>
+              <select id="setting-refresh-interval" class="setting-select">
+                <option value="15">15秒 (高頻度)</option>
+                <option value="30" selected>30秒 (標準)</option>
+                <option value="60">60秒 (省通信)</option>
+                <option value="0">手動更新のみ</option>
+              </select>
+            </div>
+
+            <div class="setting-item-block" style="margin-top:16px;">
+              <label class="setting-title" for="setting-theme-select">カラーテーマ</label>
+              <p class="setting-desc">外観テーマの切り替え</p>
+              <select id="setting-theme-select" class="setting-select">
+                <option value="system" selected>システム設定に連動</option>
+                <option value="light">ライトモード (明)</option>
+                <option value="dark">ダークモード (暗)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="card settings-section-card">
+            <h2 class="settings-card-title">📖 全時間帯 時刻表</h2>
+            <p class="setting-desc" style="margin-bottom:12px;">各停留所の平日・土曜・休日ダイヤ一覧を表示</p>
+            <div class="timetable-quick-buttons">
+              <button class="btn-tt-open" data-stop="yokodai">洋光台北口の時刻表</button>
+              <button class="btn-tt-open" data-stop="kamiooka">上大岡駅前の時刻表</button>
+              <button class="btn-tt-open" data-stop="koizumi">古泉の時刻表</button>
+            </div>
+          </div>
+
+          <div class="card settings-section-card">
+            <h2 class="settings-card-title">🔑 ODPT API & キャッシュ管理</h2>
+            
+            <div class="setting-item-block">
+              <label class="setting-title" for="input-api-key">公共交通オープンデータセンター API Key</label>
+              <p class="setting-desc">リアルタイム在線位置の取得に使用します。キーはブラウザ内（LocalStorage）にのみ安全に保存されます。（<a href="https://developer.odpt.org/" target="_blank" rel="noopener" style="color:var(--primary-color);text-decoration:underline;">ODPT開発者ポータル</a>で無料発行可能）</p>
+              <input type="text" id="input-api-key" placeholder="API Key を入力 (未設定時は時刻表のみ表示)" class="setting-text-input" autocomplete="off" spellcheck="false">
+              <div class="setting-input-actions" style="margin-top:6px;">
+                <button id="btn-reset-api-key" class="btn-text-action">キーを消去</button>
+              </div>
+            </div>
+
+            <div class="setting-row" style="margin-top:16px;">
+              <div class="setting-info">
+                <span class="setting-title">ローカルキャッシュ</span>
+                <p class="setting-desc">時刻表・ポール情報のローカル保存データ</p>
+                <span id="cache-size-display" class="cache-size-text" style="font-size:0.75rem; color:var(--text-muted);"></span>
+              </div>
+              <button id="btn-clear-cache" class="btn-warning-outline">キャッシュ消去</button>
+            </div>
+          </div>
+
+          <div class="settings-save-action-box">
+            <button id="btn-save-settings" class="btn-primary-large">💾 設定を保存して適用</button>
+          </div>
+
+          <!-- Legal Attribution -->
+          <footer class="app-credit-footer">
+            <p>データ提供: 公共交通オープンデータ協議会 (<a href="https://www.odpt.org/" target="_blank" rel="noopener">ODPT</a>)</p>
+            <p>対象路線: 横浜市営バス 111系統 / 133系統</p>
+            <p class="credit-version">Transporter v2.0 Mobile First Edition</p>
+          </footer>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Floating Pull/Quick Refresh Button (Thumb Accessible) -->
+    <button id="btn-floating-refresh" class="fab-mobile-refresh" aria-label="データを最新に更新">
+      <span class="fab-icon" id="refresh-icon">🔄</span>
+    </button>
+    <button id="refresh-btn" style="display:none;" aria-label="更新"><span id="btn-nav-direction"></span></button>
+    <button id="timetable-btn" style="display:none;" aria-label="時刻表"></button>
+
+    <!-- Modern Bottom Navigation Bar (Fixed in Thumb Zone - 3 Tabs) -->
+    <nav class="bottom-nav-bar bottom-nav" id="bottom-nav" role="navigation" aria-label="メインナビゲーション">
+      <button class="bottom-nav-item active" data-target="view-transfer" id="tab-transfer-btn">
+        <span class="nav-icon">🔀</span>
+        <span class="nav-label">乗り換え</span>
+      </button>
+      <button class="bottom-nav-item" data-target="view-stops" id="tab-stops-btn">
+        <span class="nav-icon">🚏</span>
+        <span class="nav-label">停留所</span>
+      </button>
+      <button class="bottom-nav-item" data-target="view-map" id="tab-map-btn">
+        <span class="nav-icon">📍</span>
+        <span class="nav-label">走行位置</span>
+      </button>
+      <button class="bottom-nav-item" data-target="view-settings" id="tab-settings-btn" style="display:none;" aria-hidden="true">
+        <span class="nav-icon">⚙️</span>
+        <span class="nav-label">設定</span>
+      </button>
+    </nav>
+
+    <!-- Timetable Modal Sheet -->
+    <div id="timetable-modal" class="modal-backdrop modal-container hidden" role="dialog" aria-modal="true" aria-labelledby="timetable-modal-title">
+      <div id="timetable-modal-backdrop" class="modal-sheet-backdrop"></div>
+      <div class="modal-sheet-panel">
+        <div class="modal-sheet-header">
+          <h3 id="timetable-modal-title" class="modal-sheet-title">📖 全時間帯 時刻表</h3>
+          <button id="timetable-modal-close" class="modal-close-btn" aria-label="閉じる">✕</button>
+        </div>
+
+        <div class="modal-sheet-body">
+          <div class="tt-modal-selectors">
+            <div class="tt-select-row">
+              <label for="timetable-stop-select">停留所:</label>
+              <select id="timetable-stop-select" class="modal-select">
+                <option value="yokodai">洋光台北口</option>
+                <option value="kamiooka">上大岡駅前</option>
+                <option value="koizumi">古泉</option>
+              </select>
+            </div>
+
+            <div class="tt-select-row">
+              <label for="timetable-pole-select">方面:</label>
+              <select id="timetable-pole-select" class="modal-select"></select>
+            </div>
+
+            <div class="tt-calendar-tabs">
+              <button id="btn-cal-weekday" class="tt-cal-btn active" data-cal="Weekday">平日ダイヤ</button>
+              <button id="btn-cal-saturday" class="tt-cal-btn" data-cal="Saturday">土曜ダイヤ</button>
+              <button id="btn-cal-holiday" class="tt-cal-btn" data-cal="Holiday">休日ダイヤ</button>
+            </div>
+          </div>
+
+          <div id="timetable-grid-container" class="tt-grid-scroll-area">
+            <table style="width:100%;">
+              <tbody id="timetable-tbody"></tbody>
+            </table>
+          </div>
+
+          <div style="margin-top:14px; text-align:right;">
+            <button id="btn-close-timetable" class="btn-primary-large" style="padding:10px;">閉じる</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container" aria-live="assertive"></div>
+
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

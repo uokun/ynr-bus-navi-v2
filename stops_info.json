@@ -1,0 +1,52 @@
+[
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.1",
+    "pole": "1"
+  },
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.5",
+    "pole": "5"
+  },
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6",
+    "pole": "6"
+  },
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.7",
+    "pole": "7"
+  },
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.12",
+    "pole": "12"
+  },
+  {
+    "title": "上大岡駅前",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.13",
+    "pole": "13"
+  },
+  {
+    "title": "古泉",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1",
+    "pole": "1"
+  },
+  {
+    "title": "古泉",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.2",
+    "pole": "2"
+  },
+  {
+    "title": "洋光台北口",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.YokodaiKitaguchi.7800.1",
+    "pole": "1"
+  },
+  {
+    "title": "洋光台北口",
+    "id": "odpt.BusstopPole:YokohamaMunicipal.YokodaiKitaguchi.7800.2",
+    "pole": "2"
+  }
+]

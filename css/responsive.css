@@ -1,0 +1,54 @@
+/**
+ * responsive.css
+ * Mobile responsive layout, touch target guidelines, safe area insets, desktop centering
+ */
+
+/* Mobile Touch Target Standards (WCAG & Apple Guidelines: min 44px) */
+button, input, select, .tab-btn, .pole-pill-btn, .bottom-nav-item, .header-icon-btn, .btn-swap-animated {
+  min-height: 44px;
+}
+
+/* Safe Area Insets Support */
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.bottom-nav-bar, .bottom-nav {
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 4px);
+}
+
+/* Reduced Motion Support for Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Tablet & Desktop Centering (>769px) */
+@media (min-width: 769px) {
+  body {
+    background-color: #E2E8F0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  [data-theme="dark"] body, @media (prefers-color-scheme: dark) {
+    background-color: #050811;
+  }
+
+  .app-container {
+    height: 94vh;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    border: 1px solid var(--border-color);
+  }
+
+  .bottom-nav-bar, .bottom-nav {
+    border-radius: 0 0 28px 28px;
+  }
+}

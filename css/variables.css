@@ -1,0 +1,171 @@
+/**
+ * variables.css
+ * Yokohama Municipal Bus Transit Navigator - CSS Design Tokens
+ */
+
+:root {
+  --color-primary: #004098;
+  --color-primary-dark: #002d6b;
+  --color-primary-light: #2563EB;
+  --color-accent: #FF9800;
+  --color-accent-hover: #E68900;
+  
+  --primary-color: #004098;
+  --primary-light: #2563EB;
+  --primary-glow: rgba(0, 64, 152, 0.15);
+  --accent-color: #FF9800;
+
+  --badge-111: #004098;
+  --badge-133: #D97706;
+  --badge-64: #059669;
+  --badge-other: #475569;
+
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F1F5F9;
+  --color-text-main: #0F172A;
+  --color-text-sub: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-subtle: #EEF2F6;
+
+  --bg-color: #F8FAFC;
+  --bg-app: #F8FAFC;
+  --bg-subtle: #EDF2F7;
+  --surface-color: #FFFFFF;
+  --surface-subtle: #F1F5F9;
+  --text-main: #0F172A;
+  --text-primary: #0F172A;
+  --text-color: #0F172A;
+  --text-sub: #64748B;
+  --text-muted: #94A3B8;
+  --border-color: #E2E8F0;
+  --border-subtle: #EEF2F6;
+
+  --color-status-normal: #10B981;
+  --color-status-warning: #F59E0B;
+  --color-status-urgent: #EF4444;
+  --status-normal: #10B981;
+  --status-normal-bg: rgba(16, 185, 129, 0.12);
+  --status-warning: #F59E0B;
+  --status-warning-bg: rgba(245, 158, 11, 0.12);
+  --status-urgent: #EF4444;
+  --status-urgent-bg: rgba(239, 68, 68, 0.12);
+  --status-past: #94A3B8;
+
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-pill: 9999px;
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 14px -2px rgba(15, 23, 42, 0.07);
+  --shadow-lg: 0 10px 25px -5px rgba(0, 64, 152, 0.12);
+  --shadow-nav: 0 -4px 16px rgba(0, 0, 0, 0.06);
+
+  --sat: env(safe-area-inset-top, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --header-height: calc(60px + var(--sat));
+  --nav-height: calc(64px + var(--sab));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #0B1120;
+    --color-surface: #1E293B;
+    --color-surface-subtle: #27354A;
+    --color-text-main: #F8FAFC;
+    --color-text-sub: #94A3B8;
+    --color-text-muted: #64748B;
+    --color-border: #334155;
+    --color-border-subtle: #243044;
+
+    --bg-color: #0B1120;
+    --bg-app: #0B1120;
+    --bg-subtle: #131D31;
+    --surface-color: #1E293B;
+    --surface-subtle: #27354A;
+    --text-main: #F8FAFC;
+    --text-primary: #F8FAFC;
+    --text-color: #F8FAFC;
+    --text-sub: #94A3B8;
+    --text-muted: #64748B;
+    --border-color: #334155;
+    --border-subtle: #243044;
+
+    --color-primary: #3B82F6;
+    --color-primary-light: #60A5FA;
+    --primary-color: #3B82F6;
+    --primary-light: #60A5FA;
+    --primary-glow: rgba(59, 130, 246, 0.25);
+
+    --status-normal-bg: rgba(16, 185, 129, 0.2);
+    --status-warning-bg: rgba(245, 158, 11, 0.2);
+    --status-urgent-bg: rgba(239, 68, 68, 0.2);
+
+    --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.35);
+    --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
+    --shadow-nav: 0 -4px 16px rgba(0, 0, 0, 0.4);
+  }
+}
+
+[data-theme="dark"] {
+  --color-bg: #0B1120;
+  --color-surface: #1E293B;
+  --color-surface-subtle: #27354A;
+  --color-text-main: #F8FAFC;
+  --color-text-sub: #94A3B8;
+  --color-text-muted: #64748B;
+  --color-border: #334155;
+  --color-border-subtle: #243044;
+
+  --bg-color: #0B1120;
+  --bg-app: #0B1120;
+  --bg-subtle: #131D31;
+  --surface-color: #1E293B;
+  --surface-subtle: #27354A;
+  --text-main: #F8FAFC;
+  --text-primary: #F8FAFC;
+  --text-color: #F8FAFC;
+  --text-sub: #94A3B8;
+  --text-muted: #64748B;
+  --border-color: #334155;
+  --border-subtle: #243044;
+
+  --color-primary: #3B82F6;
+  --color-primary-light: #60A5FA;
+  --primary-color: #3B82F6;
+  --primary-light: #60A5FA;
+  --primary-glow: rgba(59, 130, 246, 0.25);
+
+  --status-normal-bg: rgba(16, 185, 129, 0.2);
+  --status-warning-bg: rgba(245, 158, 11, 0.2);
+  --status-urgent-bg: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme="light"] {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-subtle: #F1F5F9;
+  --color-text-main: #0F172A;
+  --color-text-sub: #64748B;
+  --color-text-muted: #94A3B8;
+  --color-border: #E2E8F0;
+  --color-border-subtle: #EEF2F6;
+
+  --bg-color: #F8FAFC;
+  --bg-subtle: #EDF2F7;
+  --surface-color: #FFFFFF;
+  --surface-subtle: #F1F5F9;
+  --text-main: #0F172A;
+  --text-sub: #64748B;
+  --text-muted: #94A3B8;
+  --border-color: #E2E8F0;
+  --border-subtle: #EEF2F6;
+
+  --color-primary: #004098;
+  --color-primary-light: #2563EB;
+  --primary-color: #004098;
+  --primary-light: #2563EB;
+  --primary-glow: rgba(0, 64, 152, 0.15);
+}

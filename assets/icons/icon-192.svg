@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="icon-bg-192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0056D2"/>
+      <stop offset="50%" stop-color="#004098"/>
+      <stop offset="100%" stop-color="#002456"/>
+    </linearGradient>
+    <linearGradient id="gold-accent-192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFD54F"/>
+      <stop offset="100%" stop-color="#FF9800"/>
+    </linearGradient>
+    <filter id="shadow-192" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#001433" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <!-- Background Base -->
+  <rect width="192" height="192" rx="42" fill="url(#icon-bg-192)"/>
+  
+  <!-- Subtle decorative rings -->
+  <circle cx="96" cy="96" r="82" fill="none" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="2"/>
+  <circle cx="96" cy="96" r="68" fill="none" stroke="#FFFFFF" stroke-opacity="0.05" stroke-width="1.5"/>
+
+  <!-- Bus Main Shadow & Body Group -->
+  <g filter="url(#shadow-192)">
+    <!-- Bus Outer Shell -->
+    <rect x="36" y="38" width="120" height="106" rx="20" fill="#FFFFFF"/>
+    
+    <!-- Roof Destination Display Panel -->
+    <rect x="58" y="44" width="76" height="12" rx="4" fill="#0F172A"/>
+    <rect x="66" y="47" width="60" height="6" rx="2" fill="url(#gold-accent-192)"/>
+    <text x="96" y="52" font-family="-apple-system, sans-serif" font-size="5.5" font-weight="900" fill="#000000" text-anchor="middle" letter-spacing="1">YOKOHAMA</text>
+
+    <!-- Windshield -->
+    <rect x="44" y="60" width="104" height="42" rx="10" fill="#002D6C"/>
+    
+    <!-- Windshield Reflection -->
+    <path d="M 46 64 L 78 64 L 62 98 L 46 98 Z" fill="#FFFFFF" fill-opacity="0.15"/>
+    <circle cx="96" cy="80" r="3" fill="#FFFFFF" fill-opacity="0.25"/>
+
+    <!-- Grille & Brand Bar -->
+    <rect x="52" y="108" width="88" height="12" rx="6" fill="#E8F0FE"/>
+    <rect x="68" y="112" width="56" height="4" rx="2" fill="#004098"/>
+
+    <!-- Headlights -->
+    <circle cx="52" cy="126" r="8" fill="url(#gold-accent-192)"/>
+    <circle cx="52" cy="126" r="4.5" fill="#FFFDE7"/>
+    <circle cx="140" cy="126" r="8" fill="url(#gold-accent-192)"/>
+    <circle cx="140" cy="126" r="4.5" fill="#FFFDE7"/>
+
+    <!-- Bumper -->
+    <rect x="46" y="136" width="100" height="8" rx="4" fill="#334155"/>
+  </g>
+
+  <!-- Wheels -->
+  <rect x="44" y="144" width="22" height="14" rx="5" fill="#0F172A"/>
+  <rect x="126" y="144" width="22" height="14" rx="5" fill="#0F172A"/>
+
+  <!-- Fast Transit Pulse Indicator Badge (Top Right) -->
+  <circle cx="152" cy="38" r="14" fill="#FF9800" stroke="#FFFFFF" stroke-width="3"/>
+  <path d="M 148 38 L 151 32 L 156 38 L 153 38 L 155 44 Z" fill="#FFFFFF"/>
+</svg>
