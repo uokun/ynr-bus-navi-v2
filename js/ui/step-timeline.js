@@ -396,13 +396,20 @@ export class StepTimelineComponent {
         `).join('');
       }
 
+      const rowClasses = [
+        'dt-row',
+        isMajor ? 'major-stop' : '',
+        isFirst ? 'is-first' : '',
+        isLast ? 'is-last' : ''
+      ].filter(Boolean).join(' ');
+
       rowsHtml += `
-        <div class="dt-row ${isMajor ? 'major-stop' : ''}" data-index="${i}">
+        <div class="${rowClasses}" data-index="${i}">
           <!-- Left Track: Upbound -->
           <div class="dt-col-track upbound">
             <div class="dt-line-wrapper">
+              <span class="dt-line upbound"></span>
               <span class="dt-dot upbound ${isMajor ? 'major-dot' : ''}"></span>
-              ${!isLast ? '<span class="dt-line upbound"></span>' : ''}
             </div>
             <div class="dt-bus-slot upbound">
               ${upStopBusesHtml}
@@ -425,8 +432,8 @@ export class StepTimelineComponent {
               ${downEnRouteBusesHtml}
             </div>
             <div class="dt-line-wrapper">
+              <span class="dt-line downbound"></span>
               <span class="dt-dot downbound ${isMajor ? 'major-dot' : ''}"></span>
-              ${!isLast ? '<span class="dt-line downbound"></span>' : ''}
             </div>
           </div>
         </div>

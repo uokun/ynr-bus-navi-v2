@@ -2292,32 +2292,39 @@ button, input, select {
    JR East Style: Double Track Vertical Route Map
    ========================================================================= */
 
+/* =========================================================================
+   JR East Style: Double Track Vertical Route Map (Adaptive Light/Dark Theme)
+   ========================================================================= */
+
 .map-view-header-card {
   background: var(--surface-color);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
-  padding: 12px 14px;
-  margin-bottom: 12px;
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.25s ease;
 }
 
 .map-view-nav-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .map-line-tabs-group {
   display: flex;
-  gap: 6px;
+  gap: 4px;
   background: var(--surface-subtle);
-  padding: 3px;
+  padding: 4px;
   border-radius: var(--radius-pill);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-subtle);
 }
 
 .map-line-tab {
-  padding: 6px 14px;
+  padding: 7px 16px;
   border-radius: var(--radius-pill);
   border: none;
   background: transparent;
@@ -2325,13 +2332,27 @@ button, input, select {
   font-weight: 800;
   color: var(--text-sub);
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.map-line-tab:hover:not(.active) {
+  color: var(--text-main);
+  background: rgba(0, 0, 0, 0.04);
+}
+
+[data-theme="dark"] .map-line-tab:hover:not(.active) {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .map-line-tab.active {
   background: var(--primary-color);
   color: #FFFFFF;
-  box-shadow: 0 2px 6px rgba(0, 64, 152, 0.3);
+  box-shadow: 0 2px 8px rgba(0, 64, 152, 0.35);
+}
+
+.map-line-tab[data-line="133"].active {
+  background: var(--badge-133);
+  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
 }
 
 .map-status-pill {
@@ -2340,85 +2361,110 @@ button, input, select {
   gap: 6px;
   font-size: 0.74rem;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: var(--radius-pill);
   background: var(--surface-subtle);
   border: 1px solid var(--border-subtle);
   color: var(--text-sub);
+  letter-spacing: -0.01em;
 }
 
 .map-status-pill.live {
-  background: var(--primary-glow);
-  color: var(--primary-color);
-  border-color: rgba(0, 64, 152, 0.2);
+  background: var(--status-normal-bg);
+  color: var(--status-normal);
+  border-color: rgba(16, 185, 129, 0.3);
 }
 
 .map-route-sub {
-  font-size: 0.72rem;
+  font-size: 0.74rem;
+  font-weight: 600;
   color: var(--text-muted);
-  margin-top: 6px;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
-/* JR Double Track Container (Dark / HIG Authentic Look) */
+/* JR Double Track Container (Full Light/Dark Adaptive Theme) */
 .jr-double-track-map-container {
-  background: #181c24;
-  color: #e2e8f0;
+  background: var(--dt-bg);
+  color: var(--dt-text-station);
   border-radius: var(--radius-lg);
-  border: 1px solid #2d3748;
+  border: 1px solid var(--dt-border);
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  box-shadow: var(--dt-card-shadow);
+  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .dt-header-bar {
   display: grid;
   grid-template-columns: 1fr 120px 1fr;
-  background: #0f131a;
-  border-bottom: 1px solid #2d3748;
-  padding: 10px 12px;
-  font-size: 0.75rem;
+  background: var(--dt-header-bg);
+  border-bottom: 1px solid var(--dt-border);
+  padding: 12px 14px;
+  font-size: 0.76rem;
   font-weight: 800;
   align-items: center;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
 .dt-head-col {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
 .dt-head-col.upbound {
   justify-content: flex-start;
-  color: #38bdf8;
+  color: var(--dt-upbound-accent);
 }
 
 .dt-head-col.center {
   justify-content: center;
-  color: #94a3b8;
+  color: var(--dt-text-header);
   font-size: 0.72rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
+  font-weight: 700;
 }
 
 .dt-head-col.downbound {
   justify-content: flex-end;
-  color: #34d399;
+  color: var(--dt-downbound-accent);
+}
+
+.dt-head-arrow {
+  font-size: 0.85rem;
+  font-weight: 900;
+}
+
+.dt-head-dest {
+  letter-spacing: -0.02em;
+  white-space: nowrap;
 }
 
 .dt-head-count {
-  font-size: 0.68rem;
+  font-size: 0.66rem;
   font-weight: 800;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: var(--radius-pill);
-  background: #1e293b;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
 }
 
 .dt-head-count.live {
-  background: rgba(56, 189, 248, 0.2);
-  color: #38bdf8;
+  background: rgba(2, 132, 199, 0.15);
+  color: var(--dt-upbound-accent);
+  border-color: rgba(2, 132, 199, 0.3);
 }
 
 .dt-head-col.downbound .dt-head-count.live {
-  background: rgba(52, 211, 153, 0.2);
-  color: #34d399;
+  background: rgba(5, 150, 105, 0.15);
+  color: var(--dt-downbound-accent);
+  border-color: rgba(5, 150, 105, 0.3);
 }
 
 .dt-tracks-body {
@@ -2429,20 +2475,28 @@ button, input, select {
 .dt-row {
   display: grid;
   grid-template-columns: 1fr 120px 1fr;
-  min-height: 48px;
+  min-height: 52px;
   align-items: stretch;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid var(--dt-row-border);
   position: relative;
   transition: background-color 0.15s ease;
 }
 
 .dt-row:nth-child(even) {
-  background: rgba(255, 255, 255, 0.015);
+  background: var(--dt-row-even);
+}
+
+.dt-row:hover {
+  background: rgba(0, 64, 152, 0.03);
+}
+
+[data-theme="dark"] .dt-row:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .dt-row.major-stop {
-  background: rgba(56, 189, 248, 0.06);
-  border-bottom: 1px solid rgba(56, 189, 248, 0.15);
+  background: var(--dt-major-bg);
+  border-bottom: 1px solid var(--dt-major-border);
 }
 
 /* Columns */
@@ -2465,9 +2519,9 @@ button, input, select {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 14px;
+  width: 24px;
   display: flex;
-  flex-direction: column;
+  justify-content: center;
   align-items: center;
 }
 
@@ -2479,38 +2533,72 @@ button, input, select {
   left: 12px;
 }
 
-.dt-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #475569;
-  border: 2px solid #181c24;
-  margin-top: 18px;
-  z-index: 2;
-  transition: all 0.2s ease;
-}
-
-.dt-dot.upbound { background: #38bdf8; }
-.dt-dot.downbound { background: #34d399; }
-
-.dt-dot.major-dot {
-  width: 11px;
-  height: 11px;
-  margin-top: 16px;
-  box-shadow: 0 0 8px currentColor;
-}
-
+/* Continuous Straight Line Rail */
 .dt-line {
-  width: 2.5px;
-  flex: 1;
-  background: #334155;
-  margin-top: -2px;
-  margin-bottom: -2px;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 3.5px;
+  transform: translateX(-50%);
   z-index: 1;
 }
 
-.dt-line.upbound { background: #0284c7; }
-.dt-line.downbound { background: #059669; }
+.dt-row.is-first .dt-line {
+  top: 50%;
+}
+
+.dt-row.is-last .dt-line {
+  bottom: 50%;
+}
+
+.dt-line.upbound {
+  background: var(--dt-track-line-up);
+}
+
+.dt-line.downbound {
+  background: var(--dt-track-line-down);
+}
+
+/* Station Node Dots */
+.dt-dot {
+  position: relative;
+  z-index: 2;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--dt-dot-bg);
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.dt-dot.upbound {
+  border: 2.5px solid var(--dt-track-line-up);
+  box-shadow: 0 0 0 2px var(--dt-bg);
+}
+
+.dt-dot.downbound {
+  border: 2.5px solid var(--dt-track-line-down);
+  box-shadow: 0 0 0 2px var(--dt-bg);
+}
+
+.dt-dot.major-dot {
+  width: 14px;
+  height: 14px;
+}
+
+.dt-dot.upbound.major-dot {
+  background: var(--dt-track-line-up);
+  border: 2.5px solid var(--dt-bg);
+  box-shadow: 0 0 0 2px var(--dt-track-line-up), 0 2px 6px rgba(2, 132, 199, 0.35);
+}
+
+.dt-dot.downbound.major-dot {
+  background: var(--dt-track-line-down);
+  border: 2.5px solid var(--dt-bg);
+  box-shadow: 0 0 0 2px var(--dt-track-line-down), 0 2px 6px rgba(5, 150, 105, 0.35);
+}
 
 /* Stop Name Center */
 .dt-col-stop {
@@ -2526,91 +2614,136 @@ button, input, select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 3px;
 }
 
 .dt-stop-name {
-  font-size: 0.8rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  color: #cbd5e1;
+  color: var(--dt-text-station);
   letter-spacing: -0.01em;
+  transition: color 0.2s ease;
 }
 
 .dt-stop-name-wrap.major-name .dt-stop-name {
-  font-size: 0.88rem;
+  font-size: 0.92rem;
   font-weight: 800;
-  color: #ffffff;
+  color: var(--dt-text-major);
 }
 
 .dt-major-tag {
   font-size: 0.58rem;
   font-weight: 800;
-  padding: 0 5px;
-  border-radius: 3px;
-  background: #0284c7;
-  color: #ffffff;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  color: #FFFFFF;
+  box-shadow: 0 1px 4px rgba(0, 64, 152, 0.25);
+  letter-spacing: 0.02em;
 }
 
 /* Bus Slots & Pills */
 .dt-bus-slot {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
   z-index: 4;
 }
 
 .dt-col-track.upbound .dt-bus-slot {
-  margin-right: 28px;
+  margin-right: 30px;
   align-items: flex-end;
 }
 
 .dt-col-track.downbound .dt-bus-slot {
-  margin-left: 28px;
+  margin-left: 30px;
   align-items: flex-start;
 }
 
 .dt-bus-pill {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: var(--radius-pill);
-  font-size: 0.68rem;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: var(--radius-md);
+  font-size: 0.7rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
   white-space: nowrap;
+  backdrop-filter: blur(4px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+[data-theme="dark"] .dt-bus-pill {
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
+}
+
+.dt-bus-pill:hover {
+  transform: translateY(-1px);
 }
 
 .dt-bus-pill.upbound {
-  background: rgba(14, 165, 233, 0.2);
-  border: 1px solid #38bdf8;
-  color: #e0f2fe;
+  background: var(--dt-bus-bg-up);
+  border: 1px solid var(--dt-bus-border-up);
+  color: var(--dt-bus-text-up);
 }
 
 .dt-bus-pill.downbound {
-  background: rgba(16, 185, 129, 0.2);
-  border: 1px solid #34d399;
-  color: #ecfdf5;
+  background: var(--dt-bus-bg-down);
+  border: 1px solid var(--dt-bus-border-down);
+  color: var(--dt-bus-text-down);
 }
 
 .dt-bus-icon {
-  font-size: 0.85rem;
+  font-size: 0.88rem;
+  line-height: 1;
+  display: inline-block;
+}
+
+.dt-bus-icon.pulsing {
+  animation: dt-pulse-icon 2s ease-in-out infinite;
+}
+
+@keyframes dt-pulse-icon {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.18);
+  }
 }
 
 .dt-bus-dir {
-  font-size: 0.62rem;
-  font-weight: 700;
+  font-size: 0.64rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
 }
 
 .dt-delay-badge {
-  font-size: 0.58rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 3px;
-  background: #0284c7;
-  color: #ffffff;
+  padding: 1.5px 5px;
+  border-radius: 4px;
+  background: #10B981;
+  color: #FFFFFF;
+  letter-spacing: 0.01em;
 }
 
 .dt-bus-pill.delay-some .dt-delay-badge {
-  background: #ef4444;
+  background: #EF4444;
+  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.35);
+}
+
+.dt-bus-pill.en-route {
+  position: relative;
+}
+
+.dt-bus-pill.en-route::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: calc(var(--radius-md) + 2px);
+  border: 1px dashed currentColor;
+  opacity: 0.35;
+  pointer-events: none;
 }

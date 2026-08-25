@@ -67,6 +67,33 @@
   --sab: env(safe-area-inset-bottom, 0px);
   --header-height: calc(60px + var(--sat));
   --nav-height: calc(64px + var(--sab));
+
+  /* Double Track Map Tokens (Light Mode Default) */
+  --dt-bg: #FFFFFF;
+  --dt-header-bg: #F8FAFC;
+  --dt-border: #E2E8F0;
+  --dt-row-border: #F1F5F9;
+  --dt-row-even: #F8FAFC;
+  --dt-major-bg: rgba(0, 64, 152, 0.05);
+  --dt-major-border: rgba(0, 64, 152, 0.15);
+  --dt-track-line-up: #0284C7;
+  --dt-track-line-down: #059669;
+  --dt-track-bg-line: #CBD5E1;
+  --dt-dot-bg: #FFFFFF;
+  --dt-dot-border-up: #0284C7;
+  --dt-dot-border-down: #059669;
+  --dt-text-station: #334155;
+  --dt-text-major: #0F172A;
+  --dt-text-header: #475569;
+  --dt-upbound-accent: #0284C7;
+  --dt-downbound-accent: #059669;
+  --dt-bus-bg-up: #F0F9FF;
+  --dt-bus-border-up: #BAE6FD;
+  --dt-bus-text-up: #0369A1;
+  --dt-bus-bg-down: #ECFDF5;
+  --dt-bus-border-down: #A7F3D0;
+  --dt-bus-text-down: #047857;
+  --dt-card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -106,6 +133,33 @@
     --shadow-md: 0 4px 14px -2px rgba(0, 0, 0, 0.35);
     --shadow-lg: 0 10px 25px -5px rgba(0, 0, 0, 0.45);
     --shadow-nav: 0 -4px 16px rgba(0, 0, 0, 0.4);
+
+    /* Double Track Map Tokens (Dark Mode) */
+    --dt-bg: #131B2E;
+    --dt-header-bg: #0F1626;
+    --dt-border: #23324D;
+    --dt-row-border: rgba(255, 255, 255, 0.04);
+    --dt-row-even: rgba(255, 255, 255, 0.018);
+    --dt-major-bg: rgba(56, 189, 248, 0.08);
+    --dt-major-border: rgba(56, 189, 248, 0.2);
+    --dt-track-line-up: #38BDF8;
+    --dt-track-line-down: #34D399;
+    --dt-track-bg-line: #334155;
+    --dt-dot-bg: #131B2E;
+    --dt-dot-border-up: #38BDF8;
+    --dt-dot-border-down: #34D399;
+    --dt-text-station: #CBD5E1;
+    --dt-text-major: #FFFFFF;
+    --dt-text-header: #94A3B8;
+    --dt-upbound-accent: #38BDF8;
+    --dt-downbound-accent: #34D399;
+    --dt-bus-bg-up: rgba(14, 165, 233, 0.18);
+    --dt-bus-border-up: rgba(56, 189, 248, 0.5);
+    --dt-bus-text-up: #E0F2FE;
+    --dt-bus-bg-down: rgba(16, 185, 129, 0.18);
+    --dt-bus-border-down: rgba(52, 211, 153, 0.5);
+    --dt-bus-text-down: #ECFDF5;
+    --dt-card-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -141,6 +195,33 @@
   --status-normal-bg: rgba(16, 185, 129, 0.2);
   --status-warning-bg: rgba(245, 158, 11, 0.2);
   --status-urgent-bg: rgba(239, 68, 68, 0.2);
+
+  /* Double Track Map Tokens (Dark Mode) */
+  --dt-bg: #131B2E;
+  --dt-header-bg: #0F1626;
+  --dt-border: #23324D;
+  --dt-row-border: rgba(255, 255, 255, 0.04);
+  --dt-row-even: rgba(255, 255, 255, 0.018);
+  --dt-major-bg: rgba(56, 189, 248, 0.08);
+  --dt-major-border: rgba(56, 189, 248, 0.2);
+  --dt-track-line-up: #38BDF8;
+  --dt-track-line-down: #34D399;
+  --dt-track-bg-line: #334155;
+  --dt-dot-bg: #131B2E;
+  --dt-dot-border-up: #38BDF8;
+  --dt-dot-border-down: #34D399;
+  --dt-text-station: #CBD5E1;
+  --dt-text-major: #FFFFFF;
+  --dt-text-header: #94A3B8;
+  --dt-upbound-accent: #38BDF8;
+  --dt-downbound-accent: #34D399;
+  --dt-bus-bg-up: rgba(14, 165, 233, 0.18);
+  --dt-bus-border-up: rgba(56, 189, 248, 0.5);
+  --dt-bus-text-up: #E0F2FE;
+  --dt-bus-bg-down: rgba(16, 185, 129, 0.18);
+  --dt-bus-border-down: rgba(52, 211, 153, 0.5);
+  --dt-bus-text-down: #ECFDF5;
+  --dt-card-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
 }
 
 [data-theme="light"] {
@@ -168,4 +249,31 @@
   --primary-color: #004098;
   --primary-light: #2563EB;
   --primary-glow: rgba(0, 64, 152, 0.15);
+
+  /* Double Track Map Tokens (Light Mode) */
+  --dt-bg: #FFFFFF;
+  --dt-header-bg: #F8FAFC;
+  --dt-border: #E2E8F0;
+  --dt-row-border: #F1F5F9;
+  --dt-row-even: #F8FAFC;
+  --dt-major-bg: rgba(0, 64, 152, 0.05);
+  --dt-major-border: rgba(0, 64, 152, 0.15);
+  --dt-track-line-up: #0284C7;
+  --dt-track-line-down: #059669;
+  --dt-track-bg-line: #CBD5E1;
+  --dt-dot-bg: #FFFFFF;
+  --dt-dot-border-up: #0284C7;
+  --dt-dot-border-down: #059669;
+  --dt-text-station: #334155;
+  --dt-text-major: #0F172A;
+  --dt-text-header: #475569;
+  --dt-upbound-accent: #0284C7;
+  --dt-downbound-accent: #059669;
+  --dt-bus-bg-up: #F0F9FF;
+  --dt-bus-border-up: #BAE6FD;
+  --dt-bus-text-up: #0369A1;
+  --dt-bus-bg-down: #ECFDF5;
+  --dt-bus-border-down: #A7F3D0;
+  --dt-bus-text-down: #047857;
+  --dt-card-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.06), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
 }
