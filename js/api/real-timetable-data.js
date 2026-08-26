@@ -978,7 +978,7 @@ export const REAL_TIMETABLES = {
         "id": "real_561",
         "busId": "odpt.BusTimetable:YokohamaMunicipal.11101.10_3.10202603283111A00305",
         "line": "111系統",
-        "destination": "���大岡駅前 行",
+        "destination": "上大岡駅前 行",
         "departureTime": "09:15",
         "pattern": "odpt.BusroutePattern:YokohamaMunicipal.11101.10_3"
       },

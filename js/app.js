@@ -13,6 +13,7 @@ import { timetableService } from './services/timetable-service.js';
 import { transferService } from './services/transfer-service.js';
 import { PollingService } from './services/polling-service.js';
 import { calendarService } from './services/calendar-service.js';
+import { locationService } from './services/location-service.js';
 import { renderStatusBanner, updateCountdownIndicator, updateLiveClock } from './ui/render-status.js';
 import { renderMainTransfer } from './ui/render-main.js';
 import { renderStopViews, STOP_PLATFORMS, STOP_DISPLAY_NAMES, STOP_ROUTES } from './ui/render-stop-view.js';
@@ -32,6 +33,8 @@ export class App {
       kamiooka: '12',
       koizumi: '1'
     };
+    this.stopSubMode = 'departures'; // 'departures' or 'timetable'
+    this.stopTimetableCal = calendarService.getCalendarType(new Date());
     this.activeMapLine = '111';
     this.activeMapDir = 'outbound';
     this.transferBuffer = storageService.getTransferBuffer ? storageService.getTransferBuffer() : 0;
@@ -106,6 +109,32 @@ export class App {
     this.state.subscribe((newState, changedKeys) => {
       this.onStateChanged(newState, changedKeys);
     });
+
+    // 4. Geolocation based initial navigation and stop selection
+    try {
+      const geoNav = await locationService.determineInitialNavigation();
+      if (geoNav) {
+        if (geoNav.nearestStopKey === 'kamiooka') {
+          this.activeStopKey = 'kamiooka';
+          this.currentTab = 'view-stops';
+        } else if (geoNav.nearestStopKey === 'koizumi') {
+          this.direction = 'inbound';
+          this.activeStopKey = 'koizumi';
+          this.currentTab = 'view-transfer';
+        } else if (geoNav.nearestStopKey === 'yokodai') {
+          this.direction = 'outbound';
+          this.activeStopKey = 'yokodai';
+          this.currentTab = 'view-transfer';
+        }
+        this.state.setState({
+          direction: this.direction,
+          currentTab: (this.currentTab === 'view-stops') ? `stop-${this.activeStopKey}` : 'transfer'
+        });
+        this.switchTab(this.currentTab);
+      }
+    } catch (e) {
+      console.warn('[App] Geolocation init check failed:', e);
+    }
 
     return this;
   }
@@ -317,7 +346,7 @@ export class App {
       if (stopTab) {
         this.activeStopKey = stopTab.dataset?.stopKey || stopTab.getAttribute('data-stop-key');
         const platforms = STOP_PLATFORMS[this.activeStopKey] || [];
-        if (!platforms.find(p => p.pole === this.activePoles[this.activeStopKey])) {
+        if (!platforms.find(p => String(p.pole) === String(this.activePoles[this.activeStopKey]))) {
           this.activePoles[this.activeStopKey] = platforms[0]?.pole || '1';
         }
         const availRoutes = STOP_ROUTES[this.activeStopKey] || [];
@@ -326,6 +355,24 @@ export class App {
           this.state.setState({ activeFilter: 'all' });
         }
         this.state.setState({ currentTab: `stop-${this.activeStopKey}` });
+        this.renderStopsView();
+        return;
+      }
+
+      // (c2) Sub-mode Selector (Departures vs Full Timetable)
+      const subModeBtn = getClosest(e.target, '.stop-submode-btn') || getClosest(e.target, '.btn-switch-to-timetable') || getClosest(e.target, '.btn-switch-to-departures');
+      if (subModeBtn) {
+        const mode = subModeBtn.dataset?.submode || subModeBtn.getAttribute('data-submode') || 'departures';
+        this.stopSubMode = mode;
+        this.renderStopsView();
+        return;
+      }
+
+      // (c3) Inline Timetable Calendar Switcher (Weekday / Saturday / Holiday)
+      const inlineCalBtn = getClosest(e.target, '.inline-tt-cal-btn');
+      if (inlineCalBtn) {
+        const cal = inlineCalBtn.dataset?.cal || inlineCalBtn.getAttribute('data-cal') || 'Weekday';
+        this.stopTimetableCal = cal;
         this.renderStopsView();
         return;
       }
@@ -350,6 +397,13 @@ export class App {
       // (e) Open Timetable Modal from buttons
       const ttOpenBtn = getClosest(e.target, '.btn-open-timetable') || getClosest(e.target, '.btn-open-timetable-from-empty') || getClosest(e.target, '.btn-tt-open') || getClosest(e.target, '#timetable-btn') || getClosest(e.target, '#tab-timetable-all');
       if (ttOpenBtn) {
+        // If clicked from stop view's inline switch button, toggle submode smoothly
+        const isInlineSwitch = ttOpenBtn.classList && typeof ttOpenBtn.classList.contains === 'function' && ttOpenBtn.classList.contains('btn-switch-to-timetable');
+        if (isInlineSwitch && this.currentTab.startsWith('stop-') || isInlineSwitch && this.currentTab === 'view-stops') {
+          this.stopSubMode = 'timetable';
+          this.renderStopsView();
+          return;
+        }
         const stopKey = ttOpenBtn.dataset?.stop || ttOpenBtn.getAttribute?.('data-stop') || this.activeStopKey;
         modalManager.openTimetable(stopKey);
         return;
@@ -454,7 +508,7 @@ export class App {
         activeStopKey: stopK,
         activeFilter: this.state.getState().activeFilter
       });
-      this.switchTab('view-stops');
+      this.switchTab('view-stops', true);
     } else if (tabKey === 'transfer') {
       if (stopViewsContainer) stopViewsContainer.classList.add('hidden');
       if (mainCard) mainCard.classList.remove('hidden');
@@ -477,8 +531,17 @@ export class App {
     }
   }
 
-  switchTab(viewId) {
+  switchTab(viewId, isManualStopPick = false) {
     this.currentTab = viewId;
+
+    if (viewId === 'view-stops' && !isManualStopPick) {
+      if (locationService.cachedPosition) {
+        const nearest = locationService.getNearestStop(locationService.cachedPosition);
+        if (nearest && nearest.stopKey) {
+          this.activeStopKey = nearest.stopKey;
+        }
+      }
+    }
 
     if (typeof document !== 'undefined') {
       const navItems = document.querySelectorAll('.bottom-nav-item, .nav-item');
@@ -681,14 +744,20 @@ export class App {
     const container = this.els.stopsContainer;
 
     try {
-      const poleNum = this.activePoles[this.activeStopKey] || '1';
+      const poleNum = this.activePoles[this.activeStopKey] || (this.activeStopKey === 'kamiooka' ? '12' : '1');
       const platforms = STOP_PLATFORMS[this.activeStopKey] || STOP_PLATFORMS.yokodai;
-      const matched = platforms.find(p => p.pole === poleNum) || platforms[0];
+      const matched = platforms.find(p => String(p.pole) === String(poleNum)) || platforms[0];
       const poleId = matched?.poleId || '7800.1';
 
-      const calType = calendarService.getCalendarType(new Date());
-      const tt = await odptClient.fetchBusstopPoleTimetables(poleId, calType);
-      const merged = timetableService.mergeRealtimeDelays(tt, this.realtimeBuses, poleId);
+      const calType = this.stopTimetableCal || calendarService.getCalendarType(new Date());
+      const todayCal = calendarService.getCalendarType(new Date());
+      
+      const [todayTt, fullTt] = await Promise.all([
+        odptClient.fetchBusstopPoleTimetables(poleId, todayCal),
+        odptClient.fetchBusstopPoleTimetables(poleId, calType)
+      ]);
+
+      const merged = timetableService.mergeRealtimeDelays(todayTt, this.realtimeBuses, poleId);
       
       const filter = this.state.getState().activeFilter || 'all';
       const filtered = timetableService.filterTimetable(merged, { route: filter });
@@ -698,6 +767,9 @@ export class App {
         renderStopViews(container, {
           activeStopKey: this.activeStopKey,
           activePole: poleNum,
+          subMode: this.stopSubMode,
+          calType: calType,
+          fullTimetable: fullTt,
           filter: filter,
           activeFilter: filter,
           departures: departures,
@@ -710,6 +782,9 @@ export class App {
         currentTab: `stop-${this.activeStopKey}`,
         activeStopKey: this.activeStopKey,
         activePole: poleNum,
+        subMode: this.stopSubMode,
+        calType: calType,
+        fullTimetable: fullTt,
         filter: filter,
         activeFilter: filter,
         departures: departures,

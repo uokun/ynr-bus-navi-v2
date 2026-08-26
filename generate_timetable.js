@@ -32,6 +32,23 @@ function fetchJson(url) {
   });
 }
 
+function sanitizeDestination(dest, lineName, stopId) {
+  if (!dest || dest.includes('') || dest.includes('大岡駅前') || dest.includes('港') || dest.includes('根岸')) {
+    if (lineName === '111系統') {
+      if (stopId.endsWith('.1') || stopId.endsWith('.13')) return '上大岡駅前 行';
+      if (dest && dest.includes('洋光台')) return '洋光台駅前 行';
+      return '港南台駅前 行';
+    } else if (lineName === '133系統') {
+      return (stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+    }
+  }
+  if (!dest) {
+    if (lineName === '111系統') return (stopId.endsWith('.1') || stopId.endsWith('.13')) ? '上大岡駅前 行' : '港南台駅前 行';
+    if (lineName === '133系統') return (stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+  }
+  return dest.endsWith('行') ? dest : `${dest} 行`;
+}
+
 async function main() {
   console.log('=== Fetching BusTimetables from ODPT API ===');
   const allTimetables = [];
@@ -66,7 +83,7 @@ async function main() {
     let dayType = null;
     if (calendar.includes('Weekday')) dayType = 'Weekday';
     else if (calendar.includes('Saturday')) dayType = 'Saturday';
-    else if (calendar.includes('Holiday')) dayType = 'Holiday';
+    else if (calendar.includes('Holiday') || calendar.includes('Sunday')) dayType = 'Holiday';
 
     if (!dayType) return; // Skip non-standard/special calendars
 
@@ -81,21 +98,13 @@ async function main() {
       const depTime = obj['odpt:departureTime'];
 
       if (TARGET_STOPS[stopId] && depTime) {
-        // Unique key to prevent duplicates
-        const uniqueKey = `${stopId}_${dayType}_${depTime}_${lineName}_${busTimetableId}`;
+        // Unique key per stop, calendar, departure time and line
+        const uniqueKey = `${stopId}_${dayType}_${depTime}_${lineName}`;
         if (!seenKeys.has(uniqueKey)) {
           seenKeys.add(uniqueKey);
 
-          let dest = obj['odpt:destinationSign'] || '';
-          if (!dest) {
-            if (lineName === '111系統') {
-              dest = stopId.endsWith('.1') || stopId.endsWith('.13') ? '上大岡駅前 行' : '港南台駅前 行';
-            } else if (lineName === '133系統') {
-              dest = stopId.endsWith('.1') ? '上大岡駅前 行' : '根岸駅前 行';
-            } else if (lineName === '64系統') {
-              dest = stopId.endsWith('.6') ? '港南台駅前 行' : '磯子駅前 行';
-            }
-          }
+          let rawDest = obj['odpt:destinationSign'] || '';
+          let dest = sanitizeDestination(rawDest, lineName, stopId);
 
           result[stopId][dayType].push({
             id: `real_${entryCounter++}`,

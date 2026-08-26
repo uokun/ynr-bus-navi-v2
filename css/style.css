@@ -2086,7 +2086,7 @@ button, input, select {
 }
 
 /* =========================================================================
-   5-Stop Horizontal Approaching Progress Bar (Stop View)
+   10.5. Horizontal 5-Stop Approaching Progress Bar (Refined Clean UI)
    ========================================================================= */
 
 .h-5stop-container {
@@ -2100,12 +2100,13 @@ button, input, select {
 }
 
 .h-5stop-container.is-live {
-  border-color: rgba(0, 100, 255, 0.25);
+  border-color: rgba(0, 100, 255, 0.3);
+  box-shadow: 0 2px 12px rgba(0, 64, 152, 0.08);
 }
 
 .h-5stop-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   margin-bottom: 12px;
   gap: 8px;
@@ -2113,22 +2114,36 @@ button, input, select {
 
 .h-5stop-title-group {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.h-title-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .h-headline {
-  font-size: 0.82rem;
+  font-size: 0.88rem;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: -0.01em;
+  line-height: 1.25;
+}
+
+.h-subdetail {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-sub);
 }
 
 .h-delay-badge {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 8px;
   border-radius: var(--radius-pill);
+  flex-shrink: 0;
 }
 
 .h-delay-badge.delay-none {
@@ -2164,17 +2179,14 @@ button, input, select {
 }
 
 .h-5stop-track-wrapper {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 2px;
+  padding: 8px 4px 4px 4px;
 }
 
 .h-5stop-track {
   display: flex;
-  align-items: flex-start;
-  min-width: 320px;
+  align-items: center;
   position: relative;
-  padding: 26px 4px 4px 4px;
+  width: 100%;
 }
 
 .h-node {
@@ -2183,22 +2195,30 @@ button, input, select {
   align-items: center;
   position: relative;
   z-index: 2;
-  flex: 0 0 52px;
+  flex-shrink: 0;
+  width: 44px;
+}
+
+.h-node-dot-wrap {
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .h-node-dot {
-  width: 10px;
-  height: 10px;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background-color: var(--border-color);
   border: 2px solid var(--surface-color);
   box-shadow: 0 0 0 1px var(--border-color);
-  margin-bottom: 4px;
   transition: all 0.2s ease;
 }
 
 .h-node.passed .h-node-dot {
   background-color: var(--primary-light);
+  box-shadow: 0 0 0 1px var(--primary-light);
 }
 
 .h-node.current .h-node-dot,
@@ -2211,97 +2231,73 @@ button, input, select {
   box-shadow: 0 0 0 2px var(--primary-color);
 }
 
-.h-node-name {
-  font-size: 0.68rem;
-  color: var(--text-sub);
-  text-align: center;
-  width: 52px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.h-node.is-target .h-node-name {
-  font-weight: 800;
-  color: var(--text-main);
-  font-size: 0.72rem;
-}
-
 .h-node-rel {
-  font-size: 0.58rem;
+  font-size: 0.62rem;
+  font-weight: 600;
   color: var(--text-muted);
+  text-align: center;
+  white-space: nowrap;
+  margin-top: 2px;
 }
 
 .h-node.is-target .h-node-rel {
   color: var(--primary-color);
-  font-weight: 700;
+  font-weight: 800;
+}
+
+.h-node-target-name {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--text-main);
+  white-space: nowrap;
+  margin-top: 1px;
 }
 
 .h-segment {
   flex: 1;
-  height: 4px;
+  height: 3.5px;
   background-color: var(--border-color);
   position: relative;
-  margin: 0 -2px;
-  top: 4px;
   z-index: 1;
   border-radius: 2px;
-  min-width: 12px;
 }
 
 .h-segment.active {
-  background: linear-gradient(90deg, var(--primary-light), var(--primary-color));
+  background: var(--primary-color);
 }
 
 .h-bus-marker {
   position: absolute;
-  top: -24px;
+  top: -16px;
+  left: 50%;
   transform: translateX(-50%);
   display: flex;
-  flex-direction: column;
   align-items: center;
+  justify-content: center;
   z-index: 4;
   pointer-events: none;
 }
 
 .h-bus-icon {
-  font-size: 1.1rem;
+  font-size: 1.05rem;
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.25));
 }
 
-.h-bus-delay-tag {
-  font-size: 0.58rem;
-  font-weight: 800;
-  padding: 1px 4px;
-  border-radius: 3px;
-  white-space: nowrap;
-  margin-top: 1px;
-}
-
-.h-bus-delay-tag.delay-none {
-  background: var(--primary-color);
-  color: #FFFFFF;
-}
-
-.h-bus-delay-tag.delay-some {
-  background: var(--status-urgent);
-  color: #FFFFFF;
+.sub-dep-mini-loc {
+  margin-top: 6px;
+  padding-left: 2px;
 }
 
 /* =========================================================================
-   JR East Style: Double Track Vertical Route Map
-   ========================================================================= */
-
-/* =========================================================================
-   JR East Style: Double Track Vertical Route Map (Adaptive Light/Dark Theme)
+   11. JR East Style: Double Track Vertical Route Map (Adaptive Theme)
    ========================================================================= */
 
 .map-view-header-card {
   background: var(--surface-color);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 14px 16px;
-  margin-bottom: 14px;
+  padding: 12px 14px;
+  margin-bottom: 12px;
   box-shadow: var(--shadow-sm);
   transition: all 0.25s ease;
 }
@@ -2311,20 +2307,19 @@ button, input, select {
   justify-content: space-between;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .map-line-tabs-group {
   display: flex;
   gap: 4px;
   background: var(--surface-subtle);
-  padding: 4px;
+  padding: 3px;
   border-radius: var(--radius-pill);
   border: 1px solid var(--border-subtle);
 }
 
 .map-line-tab {
-  padding: 7px 16px;
+  padding: 6px 14px;
   border-radius: var(--radius-pill);
   border: none;
   background: transparent;
@@ -2337,22 +2332,11 @@ button, input, select {
 
 .map-line-tab:hover:not(.active) {
   color: var(--text-main);
-  background: rgba(0, 0, 0, 0.04);
-}
-
-[data-theme="dark"] .map-line-tab:hover:not(.active) {
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .map-line-tab.active {
   background: var(--primary-color);
   color: #FFFFFF;
-  box-shadow: 0 2px 8px rgba(0, 64, 152, 0.35);
-}
-
-.map-line-tab[data-line="133"].active {
-  background: var(--badge-133);
-  box-shadow: 0 2px 8px rgba(217, 119, 6, 0.35);
 }
 
 .map-status-pill {
@@ -2366,7 +2350,6 @@ button, input, select {
   background: var(--surface-subtle);
   border: 1px solid var(--border-subtle);
   color: var(--text-sub);
-  letter-spacing: -0.01em;
 }
 
 .map-status-pill.live {
@@ -2379,13 +2362,10 @@ button, input, select {
   font-size: 0.74rem;
   font-weight: 600;
   color: var(--text-muted);
-  margin-top: 8px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  margin-top: 6px;
 }
 
-/* JR Double Track Container (Full Light/Dark Adaptive Theme) */
+/* JR Double Track Container */
 .jr-double-track-map-container {
   background: var(--dt-bg);
   color: var(--dt-text-station);
@@ -2393,16 +2373,15 @@ button, input, select {
   border: 1px solid var(--dt-border);
   overflow: hidden;
   box-shadow: var(--dt-card-shadow);
-  transition: background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
 }
 
 .dt-header-bar {
   display: grid;
-  grid-template-columns: 1fr 120px 1fr;
+  grid-template-columns: 88px minmax(0, 1fr) 88px;
   background: var(--dt-header-bg);
   border-bottom: 1px solid var(--dt-border);
-  padding: 12px 14px;
-  font-size: 0.76rem;
+  padding: 10px 8px;
+  font-size: 0.72rem;
   font-weight: 800;
   align-items: center;
   position: sticky;
@@ -2414,7 +2393,8 @@ button, input, select {
 .dt-head-col {
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .dt-head-col.upbound {
@@ -2426,7 +2406,6 @@ button, input, select {
   justify-content: center;
   color: var(--dt-text-header);
   font-size: 0.72rem;
-  letter-spacing: 0.08em;
   font-weight: 700;
 }
 
@@ -2435,36 +2414,30 @@ button, input, select {
   color: var(--dt-downbound-accent);
 }
 
-.dt-head-arrow {
-  font-size: 0.85rem;
-  font-weight: 900;
-}
-
 .dt-head-dest {
   letter-spacing: -0.02em;
   white-space: nowrap;
+  font-size: 0.68rem;
 }
 
 .dt-head-count {
-  font-size: 0.66rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  padding: 2px 7px;
+  padding: 1px 4px;
   border-radius: var(--radius-pill);
   background: var(--surface-subtle);
   color: var(--text-muted);
-  border: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 
 .dt-head-count.live {
   background: rgba(2, 132, 199, 0.15);
   color: var(--dt-upbound-accent);
-  border-color: rgba(2, 132, 199, 0.3);
 }
 
 .dt-head-col.downbound .dt-head-count.live {
   background: rgba(5, 150, 105, 0.15);
   color: var(--dt-downbound-accent);
-  border-color: rgba(5, 150, 105, 0.3);
 }
 
 .dt-tracks-body {
@@ -2474,37 +2447,28 @@ button, input, select {
 
 .dt-row {
   display: grid;
-  grid-template-columns: 1fr 120px 1fr;
-  min-height: 52px;
+  grid-template-columns: 88px minmax(0, 1fr) 88px;
+  min-height: 48px;
   align-items: stretch;
   border-bottom: 1px solid var(--dt-row-border);
   position: relative;
-  transition: background-color 0.15s ease;
 }
 
 .dt-row:nth-child(even) {
   background: var(--dt-row-even);
 }
 
-.dt-row:hover {
-  background: rgba(0, 64, 152, 0.03);
-}
-
-[data-theme="dark"] .dt-row:hover {
-  background: rgba(255, 255, 255, 0.03);
-}
-
 .dt-row.major-stop {
   background: var(--dt-major-bg);
-  border-bottom: 1px solid var(--dt-major-border);
 }
 
 /* Columns */
 .dt-col-track {
+  position: relative;
   display: flex;
   align-items: center;
-  position: relative;
-  padding: 0 10px;
+  min-width: 0;
+  padding: 0;
 }
 
 .dt-col-track.upbound {
@@ -2519,18 +2483,19 @@ button, input, select {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 24px;
+  width: 16px;
   display: flex;
   justify-content: center;
   align-items: center;
+  z-index: 2;
 }
 
 .dt-col-track.upbound .dt-line-wrapper {
-  right: 12px;
+  right: 10px;
 }
 
 .dt-col-track.downbound .dt-line-wrapper {
-  left: 12px;
+  left: 10px;
 }
 
 /* Continuous Straight Line Rail */
@@ -2539,7 +2504,7 @@ button, input, select {
   top: 0;
   bottom: 0;
   left: 50%;
-  width: 3.5px;
+  width: 3px;
   transform: translateX(-50%);
   z-index: 1;
 }
@@ -2564,40 +2529,39 @@ button, input, select {
 .dt-dot {
   position: relative;
   z-index: 2;
-  width: 10px;
-  height: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--dt-dot-bg);
   box-sizing: border-box;
-  transition: all 0.2s ease;
   flex-shrink: 0;
 }
 
 .dt-dot.upbound {
-  border: 2.5px solid var(--dt-track-line-up);
-  box-shadow: 0 0 0 2px var(--dt-bg);
+  border: 2px solid var(--dt-track-line-up);
+  box-shadow: 0 0 0 1.5px var(--dt-bg);
 }
 
 .dt-dot.downbound {
-  border: 2.5px solid var(--dt-track-line-down);
-  box-shadow: 0 0 0 2px var(--dt-bg);
+  border: 2px solid var(--dt-track-line-down);
+  box-shadow: 0 0 0 1.5px var(--dt-bg);
 }
 
 .dt-dot.major-dot {
-  width: 14px;
-  height: 14px;
+  width: 12px;
+  height: 12px;
 }
 
 .dt-dot.upbound.major-dot {
   background: var(--dt-track-line-up);
-  border: 2.5px solid var(--dt-bg);
-  box-shadow: 0 0 0 2px var(--dt-track-line-up), 0 2px 6px rgba(2, 132, 199, 0.35);
+  border: 2px solid var(--dt-bg);
+  box-shadow: 0 0 0 1.5px var(--dt-track-line-up);
 }
 
 .dt-dot.downbound.major-dot {
   background: var(--dt-track-line-down);
-  border: 2.5px solid var(--dt-bg);
-  box-shadow: 0 0 0 2px var(--dt-track-line-down), 0 2px 6px rgba(5, 150, 105, 0.35);
+  border: 2px solid var(--dt-bg);
+  box-shadow: 0 0 0 1.5px var(--dt-track-line-down);
 }
 
 /* Stop Name Center */
@@ -2606,80 +2570,76 @@ button, input, select {
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 8px 4px;
+  padding: 6px 4px;
   z-index: 3;
+  min-width: 0;
+  width: 100%;
 }
 
 .dt-stop-name-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 3px;
+  gap: 2px;
 }
 
 .dt-stop-name {
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--dt-text-station);
   letter-spacing: -0.01em;
-  transition: color 0.2s ease;
+  line-height: 1.2;
 }
 
 .dt-stop-name-wrap.major-name .dt-stop-name {
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 800;
   color: var(--dt-text-major);
 }
 
 .dt-major-tag {
-  font-size: 0.58rem;
+  font-size: 0.55rem;
   font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 4px;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-light));
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--primary-color);
   color: #FFFFFF;
-  box-shadow: 0 1px 4px rgba(0, 64, 152, 0.25);
-  letter-spacing: 0.02em;
 }
 
 /* Bus Slots & Pills */
 .dt-bus-slot {
+  position: absolute;
+  top: 0;
+  bottom: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  justify-content: center;
   z-index: 4;
 }
 
 .dt-col-track.upbound .dt-bus-slot {
-  margin-right: 30px;
+  right: 28px;
+  left: 2px;
   align-items: flex-end;
 }
 
 .dt-col-track.downbound .dt-bus-slot {
-  margin-left: 30px;
+  left: 28px;
+  right: 2px;
   align-items: flex-start;
 }
 
 .dt-bus-pill {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 9px;
-  border-radius: var(--radius-md);
-  font-size: 0.7rem;
+  gap: 3px;
+  padding: 2px 4px;
+  border-radius: var(--radius-sm);
+  font-size: 0.6rem;
   font-weight: 700;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
   white-space: nowrap;
-  backdrop-filter: blur(4px);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-[data-theme="dark"] .dt-bus-pill {
-  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.4);
-}
-
-.dt-bus-pill:hover {
-  transform: translateY(-1px);
+  box-sizing: border-box;
 }
 
 .dt-bus-pill.upbound {
@@ -2695,55 +2655,26 @@ button, input, select {
 }
 
 .dt-bus-icon {
-  font-size: 0.88rem;
+  font-size: 0.76rem;
   line-height: 1;
-  display: inline-block;
 }
 
-.dt-bus-icon.pulsing {
-  animation: dt-pulse-icon 2s ease-in-out infinite;
-}
-
-@keyframes dt-pulse-icon {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.18);
-  }
-}
-
-.dt-bus-dir {
-  font-size: 0.64rem;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+.dt-bus-arrow {
+  font-size: 0.7rem;
+  font-weight: 900;
+  line-height: 1;
 }
 
 .dt-delay-badge {
-  font-size: 0.6rem;
+  font-size: 0.56rem;
   font-weight: 800;
-  padding: 1.5px 5px;
-  border-radius: 4px;
+  padding: 1px 3px;
+  border-radius: 3px;
   background: #10B981;
   color: #FFFFFF;
-  letter-spacing: 0.01em;
+  line-height: 1.1;
 }
 
 .dt-bus-pill.delay-some .dt-delay-badge {
   background: #EF4444;
-  box-shadow: 0 1px 4px rgba(239, 68, 68, 0.35);
-}
-
-.dt-bus-pill.en-route {
-  position: relative;
-}
-
-.dt-bus-pill.en-route::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: calc(var(--radius-md) + 2px);
-  border: 1px dashed currentColor;
-  opacity: 0.35;
-  pointer-events: none;
 }

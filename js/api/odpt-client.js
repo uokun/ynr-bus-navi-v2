@@ -6,6 +6,24 @@
 
 import { CONFIG, API_BASE, OPERATOR_ID, CACHE_TTL } from '../config.js';
 import { storageService } from '../services/storage-service.js';
+import { REAL_TIMETABLES } from './real-timetable-data.js';
+
+function normalizeDestination(dest, lineName, stopId) {
+  if (!dest || dest.includes('') || dest.includes('大岡駅前') || dest.includes('港') || dest.includes('根岸')) {
+    if (lineName === '111系統') {
+      if (stopId && (stopId.endsWith('.1') || stopId.endsWith('.13'))) return '上大岡駅前 行';
+      if (dest && dest.includes('洋光台')) return '洋光台駅前 行';
+      return '港南台駅前 行';
+    } else if (lineName === '133系統') {
+      return (stopId && stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+    }
+  }
+  if (!dest) {
+    if (lineName === '111系統') return (stopId && (stopId.endsWith('.1') || stopId.endsWith('.13'))) ? '上大岡駅前 行' : '港南台駅前 行';
+    if (lineName === '133系統') return (stopId && stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+  }
+  return dest.endsWith('行') ? dest : `${dest} 行`;
+}
 
 export class OdptClient {
   constructor(options = {}) {
@@ -200,12 +218,16 @@ export class OdptClient {
     }
 
     const indexed = {};
+    const seenKeys = new Set();
 
     for (const tt of allTimetables) {
       const cal = tt['odpt:calendar'] || '';
-      let dayType = 'Weekday';
-      if (cal.includes('Saturday')) dayType = 'Saturday';
+      let dayType = null;
+      if (cal.includes('Weekday')) dayType = 'Weekday';
+      else if (cal.includes('Saturday')) dayType = 'Saturday';
       else if (cal.includes('Holiday') || cal.includes('Sunday')) dayType = 'Holiday';
+
+      if (!dayType) continue; // Skip non-standard calendars
 
       const rawTitle = tt['dc:title'] || '';
       const lineName = rawTitle.replace(/^0/, '') || '111系統';
@@ -218,22 +240,16 @@ export class OdptClient {
         const depTime = obj['odpt:departureTime'];
         if (!stopId || !depTime) continue;
 
+        const uniqueKey = `${stopId}_${dayType}_${depTime}_${lineName}`;
+        if (seenKeys.has(uniqueKey)) continue;
+        seenKeys.add(uniqueKey);
+
         if (!indexed[stopId]) {
           indexed[stopId] = { Weekday: [], Saturday: [], Holiday: [] };
         }
 
-        let dest = obj['odpt:destinationSign'] || '';
-        if (!dest) {
-          if (lineName === '111系統') {
-            dest = (stopId.endsWith('.1') || stopId.endsWith('.13')) ? '上大岡駅前 行' : '港南台駅前 行';
-          } else if (lineName === '133系統') {
-            dest = stopId.endsWith('.1') ? '上大岡駅前 行' : '根岸駅前 行';
-          } else if (lineName === '64系統') {
-            dest = stopId.endsWith('.6') ? '港南台駅前 行' : '磯子駅前 行';
-          } else {
-            dest = '上大岡駅前 行';
-          }
-        }
+        let rawDest = obj['odpt:destinationSign'] || '';
+        let dest = normalizeDestination(rawDest, lineName, stopId);
 
         indexed[stopId][dayType].push({
           busId: busTimetableId,
@@ -271,18 +287,27 @@ export class OdptClient {
       await this._fetchAndIndexTimetables();
     }
 
-    if (!this._timetableCache) {
-      return [];
+    // 1. Try cache if populated
+    if (this._timetableCache) {
+      let matchedKey = poleId;
+      if (!this._timetableCache[matchedKey]) {
+        matchedKey = Object.keys(this._timetableCache).find(k => k.includes(poleId) || (poleId && poleId.includes(k)));
+      }
+
+      if (matchedKey && this._timetableCache[matchedKey] && this._timetableCache[matchedKey][dayType]) {
+        return this._timetableCache[matchedKey][dayType];
+      }
     }
 
-    // Match poleId
-    let matchedKey = poleId;
-    if (!this._timetableCache[matchedKey]) {
-      matchedKey = Object.keys(this._timetableCache).find(k => k.includes(poleId) || (poleId && poleId.includes(k)));
-    }
-
-    if (matchedKey && this._timetableCache[matchedKey]) {
-      return this._timetableCache[matchedKey][dayType] || [];
+    // 2. Fallback to built-in full verified timetable dataset
+    if (REAL_TIMETABLES) {
+      let matchedKey = poleId;
+      if (!REAL_TIMETABLES[matchedKey]) {
+        matchedKey = Object.keys(REAL_TIMETABLES).find(k => k.includes(poleId) || (poleId && poleId.includes(k)));
+      }
+      if (matchedKey && REAL_TIMETABLES[matchedKey] && REAL_TIMETABLES[matchedKey][dayType]) {
+        return REAL_TIMETABLES[matchedKey][dayType];
+      }
     }
 
     return [];

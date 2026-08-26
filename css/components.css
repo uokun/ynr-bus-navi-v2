@@ -1420,6 +1420,262 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+/* =========================================================================
+   12. Stop Submode Switcher & Inline Timetable Grid (Modern UX)
+   ========================================================================= */
+
+.stop-submode-tabs {
+  display: flex;
+  background: var(--surface-subtle);
+  border-radius: var(--radius-pill);
+  padding: 3px;
+  margin-bottom: 12px;
+  border: 1px solid var(--border-color);
+  gap: 4px;
+}
+
+.stop-submode-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stop-submode-btn.active {
+  background: var(--surface-color);
+  color: var(--primary-color);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* Inline Timetable Card */
+.inline-timetable-card {
+  padding: 16px;
+}
+
+.inline-tt-header {
+  margin-bottom: 12px;
+}
+
+.inline-tt-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.inline-tt-title {
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.inline-tt-today-badge {
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: var(--radius-pill);
+  background: var(--surface-subtle);
+  color: var(--primary-color);
+  border: 1px solid var(--border-color);
+}
+
+.inline-tt-today-badge.weekday {
+  background: rgba(0, 64, 152, 0.08);
+  color: var(--primary-color);
+}
+
+.inline-tt-today-badge.saturday {
+  background: rgba(2, 132, 199, 0.12);
+  color: #0284C7;
+}
+
+.inline-tt-today-badge.sunday, .inline-tt-today-badge.holiday {
+  background: rgba(220, 38, 38, 0.1);
+  color: #DC2626;
+}
+
+.inline-tt-summary {
+  font-size: 0.76rem;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+
+/* Inline Timetable Calendar Tabs */
+.inline-tt-cal-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.inline-tt-cal-btn {
+  flex: 1;
+  padding: 8px 6px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-color);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+
+.inline-tt-cal-btn.active {
+  background: var(--primary-color);
+  color: #FFFFFF;
+  border-color: var(--primary-color);
+  box-shadow: 0 2px 6px rgba(0, 64, 152, 0.25);
+}
+
+.today-tag {
+  font-size: 0.65rem;
+  font-weight: 800;
+  background: rgba(0, 0, 0, 0.12);
+  color: inherit;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+
+.inline-tt-cal-btn.active .today-tag {
+  background: rgba(255, 255, 255, 0.25);
+  color: #FFFFFF;
+}
+
+/* Grid Wrapper & Rows */
+.inline-tt-grid-wrapper {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  background: var(--surface-color);
+  max-height: 52vh;
+  overflow-y: auto;
+}
+
+.inline-tt-row {
+  display: flex;
+  border-bottom: 1px solid var(--border-subtle);
+  min-height: 42px;
+  transition: background-color 0.2s ease;
+}
+
+.inline-tt-row:last-child {
+  border-bottom: none;
+}
+
+.inline-tt-row.current-hour-row {
+  background: rgba(0, 64, 152, 0.06);
+  border-left: 4px solid var(--primary-color);
+}
+
+[data-theme="dark"] .inline-tt-row.current-hour-row {
+  background: rgba(56, 189, 248, 0.1);
+  border-left: 4px solid var(--primary-color);
+}
+
+.inline-tt-hour {
+  width: 54px;
+  background: var(--surface-subtle);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+  padding: 4px 2px;
+}
+
+.hour-num {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--primary-color);
+  line-height: 1.1;
+}
+
+.current-hour-tag {
+  font-size: 0.58rem;
+  font-weight: 800;
+  background: var(--primary-color);
+  color: #FFFFFF;
+  padding: 1px 4px;
+  border-radius: 3px;
+  margin-top: 2px;
+}
+
+.inline-tt-minutes {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  flex-wrap: wrap;
+}
+
+.inline-tt-chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface-subtle);
+  border: 1px solid var(--border-color);
+  padding: 3px 6px;
+  border-radius: 5px;
+  min-width: 32px;
+  transition: transform 0.15s ease;
+}
+
+.inline-tt-chip:hover {
+  transform: translateY(-1px);
+}
+
+.inline-tt-chip.past-bus {
+  opacity: 0.45;
+}
+
+.inline-tt-min {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.inline-tt-dest {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-top: 1px;
+}
+
+.inline-tt-empty {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.inline-tt-footer {
+  margin-top: 14px;
+}
+
 .hidden {
   display: none !important;
 }
+

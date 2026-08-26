@@ -129,6 +129,77 @@ export class CalendarService {
   }
 
   /**
+   * Gets holiday name if the date is a holiday.
+   * @param {Date} date
+   * @returns {string|null}
+   */
+  getHolidayName(date = new Date()) {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      date = new Date();
+    }
+
+    const y = date.getFullYear();
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const dayOfWeek = date.getDay();
+
+    if ((m === 12 && d >= 29) || (m === 1 && d <= 3)) {
+      if (m === 1 && d === 1) return '元日';
+      return '年末年始特別ダイヤ期間';
+    }
+
+    const fixed = [
+      { m: 1, d: 1, name: '元日' },
+      { m: 2, d: 11, name: '建国記念の日' },
+      { m: 2, d: 23, name: '天皇誕生日' },
+      { m: 4, d: 29, name: '昭和の日' },
+      { m: 5, d: 3, name: '憲法記念日' },
+      { m: 5, d: 4, name: 'みどりの日' },
+      { m: 5, d: 5, name: 'こどもの日' },
+      { m: 8, d: 11, name: '山の日' },
+      { m: 11, d: 3, name: '文化の日' },
+      { m: 11, d: 23, name: '勤労感謝の日' }
+    ];
+    for (const h of fixed) {
+      if (m === h.m && d === h.d) return h.name;
+    }
+
+    if (m === 1 && dayOfWeek === 1 && d >= 8 && d <= 14) return '成人の日';
+    if (m === 7 && dayOfWeek === 1 && d >= 15 && d <= 21) return '海の日';
+    if (m === 9 && dayOfWeek === 1 && d >= 15 && d <= 21) return '敬老の日';
+    if (m === 10 && dayOfWeek === 1 && d >= 8 && d <= 14) return 'スポーツの日';
+
+    const vernalDay = Math.floor(20.8431 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+    if (m === 3 && d === vernalDay) return '春分の日';
+
+    const autumnalDay = Math.floor(23.2488 + 0.242194 * (y - 1980) - Math.floor((y - 1980) / 4));
+    if (m === 9 && d === autumnalDay) return '秋分の日';
+
+    if (m === 9 && dayOfWeek === 2 && d >= 16 && d <= 23) {
+      const prevDay = new Date(y, 8, d - 1);
+      const nextDay = new Date(y, 8, d + 1);
+      if (this._isPureNationalHoliday(prevDay) && this._isPureNationalHoliday(nextDay)) {
+        return '国民の休日';
+      }
+    }
+
+    const yesterday = new Date(y, m - 1, d - 1);
+    if (yesterday.getDay() === 0 && this._isPureNationalHoliday(yesterday)) {
+      return '振替休日';
+    }
+
+    if (m === 5 && d === 6) {
+      const may3 = new Date(y, 4, 3);
+      const may4 = new Date(y, 4, 4);
+      if (may3.getDay() === 0 || may4.getDay() === 0) {
+        return '振替休日';
+      }
+    }
+
+    return null;
+  }
+
+  /**
    * Determines whether the given date uses 'Weekday', 'Saturday', or 'Holiday' timetable.
    * @param {Date} [date=new Date()]
    * @returns {'Weekday' | 'Saturday' | 'Holiday'}
@@ -152,7 +223,104 @@ export class CalendarService {
     }
     return 'Weekday'; // Monday to Friday
   }
+
+  /**
+   * Checks if date is a standard weekday (Monday - Friday, not a holiday).
+   * @param {Date} [date=new Date()]
+   * @returns {boolean}
+   */
+  isWeekday(date = new Date()) {
+    return this.getCalendarType(date) === 'Weekday';
+  }
+
+  /**
+   * Checks if date is a Saturday (not a holiday).
+   * @param {Date} [date=new Date()]
+   * @returns {boolean}
+   */
+  isSaturday(date = new Date()) {
+    return this.getCalendarType(date) === 'Saturday';
+  }
+
+  /**
+   * Checks if date is a Sunday.
+   * @param {Date} [date=new Date()]
+   * @returns {boolean}
+   */
+  isSunday(date = new Date()) {
+    if (!(date instanceof Date) || isNaN(date.getTime())) date = new Date();
+    return date.getDay() === 0;
+  }
+
+  /**
+   * Comprehensive day classification identifying whether today is Weekday, Saturday, Sunday, or Holiday.
+   * @param {Date} [date=new Date()]
+   * @returns {Object}
+   */
+  getDayDetail(date = new Date()) {
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      date = new Date();
+    }
+
+    const dayOfWeekIndex = date.getDay(); // 0 = Sun, 1 = Mon, ..., 6 = Sat
+    const dayOfWeekNames = ['日', '月', '火', '水', '木', '金', '土'];
+    const dayOfWeek = dayOfWeekNames[dayOfWeekIndex];
+
+    const holidayName = this.getHolidayName(date);
+    const isHol = Boolean(holidayName || this.isJapaneseHoliday(date));
+    const calendarType = this.getCalendarType(date); // 'Weekday' | 'Saturday' | 'Holiday'
+
+    let dayCategory = 'weekday'; // 'weekday' | 'saturday' | 'sunday' | 'holiday'
+    let label = '平日';
+
+    if (isHol) {
+      dayCategory = 'holiday';
+      label = holidayName || '祝日・休日';
+    } else if (dayOfWeekIndex === 0) {
+      dayCategory = 'sunday';
+      label = '日曜日';
+    } else if (dayOfWeekIndex === 6) {
+      dayCategory = 'saturday';
+      label = '土曜日';
+    } else {
+      dayCategory = 'weekday';
+      label = '平日';
+    }
+
+    const scheduleName = calendarType === 'Weekday' ? '平日ダイヤ' : (calendarType === 'Saturday' ? '土曜ダイヤ' : '休日ダイヤ');
+
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    const formattedDate = `${m}月${d}日(${dayOfWeek})`;
+
+    let badgeText = scheduleName;
+    if (holidayName) {
+      badgeText = `休日ダイヤ (${holidayName})`;
+    } else if (dayCategory === 'sunday') {
+      badgeText = `休日ダイヤ (日曜)`;
+    } else if (dayCategory === 'saturday') {
+      badgeText = `土曜ダイヤ (土曜)`;
+    } else {
+      badgeText = `平日ダイヤ (${dayOfWeek}曜)`;
+    }
+
+    let description = `本日 ${formattedDate} は ${label} です（${scheduleName}で運行）`;
+
+    return {
+      dayCategory,        // 'weekday' | 'saturday' | 'sunday' | 'holiday'
+      calendarType,       // 'Weekday' | 'Saturday' | 'Holiday'
+      label,              // '平日', '土曜日', '日曜日', '憲法記念日' など
+      dayOfWeek,          // '日', '月', '火', '水', '木', '金', '土'
+      holidayName,        // 祝日名 または null
+      isHoliday: isHol,   // true / false
+      scheduleName,       // '平日ダイヤ' | '土曜ダイヤ' | '休日ダイヤ'
+      badgeText,          // 例: "平日ダイヤ (水曜)", "休日ダイヤ (憲法記念日)"
+      formattedDate,      // 例: "8月26日(水)"
+      description         // 例: "本日 8月26日(水) は 平日 です（平日ダイヤで運行）"
+    };
+  }
 }
 
 export const calendarService = new CalendarService();
 export default calendarService;
+

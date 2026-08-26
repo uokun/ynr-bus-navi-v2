@@ -175,7 +175,27 @@ export class StepTimelineComponent {
     }
 
     // 表示テキストの構築
-    const displayText = statusText || (stopsAway !== null ? `${stopsAway}個前` : '走行中');
+    let displayText = '';
+    if (safeStatus === 'at_stop') {
+      displayText = '当バス停に停車中';
+    } else if (safeStatus === 'approaching') {
+      displayText = fromStopName ? `まもなく到着 (${fromStopName}発)` : 'まもなく到着';
+    } else {
+      // en_route
+      if (fromStopName && toStopName && typeof stopsAway === 'number') {
+        displayText = `${fromStopName}〜${toStopName}間 (あと${stopsAway}駅)`;
+      } else if (fromStopName && typeof stopsAway === 'number') {
+        displayText = `${fromStopName}付近 (あと${stopsAway}駅)`;
+      } else if (fromStopName && toStopName) {
+        displayText = `${fromStopName}〜${toStopName}間 走行中`;
+      } else if (fromStopName) {
+        displayText = `${fromStopName}付近 走行中`;
+      } else if (typeof stopsAway === 'number') {
+        displayText = `あと${stopsAway}駅前を走行中`;
+      } else {
+        displayText = statusText || '走行中';
+      }
+    }
 
     return `
       <div class="mini-bus-location live ${safeStatus}" role="status" aria-label="在線位置: ${escapeHtml(displayText)}">
@@ -227,14 +247,22 @@ export class StepTimelineComponent {
 
     // サマリー見出しの生成
     let headline = statusText;
+    let detailText = '';
     if (status === 'at_stop') {
-      headline = `当バス停【${targetStopName}】に到着・停車中`;
+      headline = `当バス停【${targetStopName}】に停車中`;
+      detailText = 'まもなく乗車いただけます';
     } else if (status === 'approaching') {
-      headline = `まもなく【${targetStopName}】に到着します`;
+      headline = `まもなく【${targetStopName}】に到着`;
+      detailText = '次が当停留所です（お近くでお待ちください）';
     } else if (status === 'en_route' && typeof stopsAway === 'number') {
       headline = `${stopsAway}つ前のバス停付近を走行中`;
+      const curStopName = stops.find(s => s.isCurrent)?.name || '';
+      if (curStopName) {
+        detailText = `現在位置: ${curStopName} 付近 (あと${stopsAway}駅)`;
+      }
     } else if (status === 'scheduled') {
       headline = `運行前（所定ダイヤ通り運行見込み）`;
+      detailText = '現在位置情報を受信次第、接近情報を更新します';
     }
 
     // 6ノードの横並びHTML生成
@@ -247,19 +275,21 @@ export class StepTimelineComponent {
       const isCurrent = !!stop.isCurrent;
       const isPassed = !!stop.isPassed;
       const stopName = escapeHtml(stop.name || '');
-      const relText = escapeHtml(stop.relText || '');
+      const relLabel = isTarget ? '当バス停' : (totalNodes - 1 - i) + '個前';
 
       let nodeStateClass = 'upcoming';
       if (isCurrent) nodeStateClass = 'current';
       else if (isTarget) nodeStateClass = 'target';
       else if (isPassed) nodeStateClass = 'passed';
 
-      // ノード（駅・バス停）
+      // ノード（駅・バス停）: 重複や省略を防ぐスッキリしたノードドットとラベル
       trackHtml += `
         <div class="h-node ${nodeStateClass} ${isTarget ? 'is-target' : ''}" data-index="${i}">
-          <div class="h-node-dot ${isTarget ? 'target-dot' : ''}"></div>
-          <span class="h-node-name" title="${stopName}">${stopName}</span>
-          <span class="h-node-rel">${relText}</span>
+          <div class="h-node-dot-wrap">
+            <span class="h-node-dot ${isTarget ? 'target-dot' : ''}"></span>
+          </div>
+          <span class="h-node-rel ${isTarget ? 'target-rel' : ''}">${escapeHtml(relLabel)}</span>
+          ${isTarget ? `<span class="h-node-target-name">${stopName}</span>` : ''}
         </div>
       `;
 
@@ -273,12 +303,9 @@ export class StepTimelineComponent {
 
         let markerHtml = '';
         if (isBusInSeg) {
-          const rawPct = (typeof busPosition.percent === 'number') ? busPosition.percent : 50;
-          const leftPct = Math.max(5, Math.min(95, rawPct));
           markerHtml = `
-            <div class="h-bus-marker" style="left: ${leftPct}%;">
-              <span class="h-bus-icon ${isLive ? 'pulsing' : ''}" aria-hidden="true">🚍</span>
-              <span class="h-bus-delay-tag ${delayClass}">${escapeHtml(delayText)}</span>
+            <div class="h-bus-marker">
+              <span class="h-bus-icon pulsing" aria-hidden="true">🚍</span>
             </div>
           `;
         }
@@ -297,7 +324,10 @@ export class StepTimelineComponent {
         <div class="h-5stop-header">
           <div class="h-5stop-title-group">
             <span class="pulse-indicator ${isLive ? 'live' : 'scheduled'}"></span>
-            <span class="h-headline">${escapeHtml(headline)}</span>
+            <div class="h-title-texts">
+              <span class="h-headline">${escapeHtml(headline)}</span>
+              ${detailText ? `<span class="h-subdetail">${escapeHtml(detailText)}</span>` : ''}
+            </div>
           </div>
           <span class="h-delay-badge ${delayClass}">${escapeHtml(delayText)}</span>
         </div>
@@ -347,50 +377,46 @@ export class StepTimelineComponent {
       const isMajor = !!stop.isMajor;
 
       // 1. 左カラム: 上り線（上大岡駅前 行き）のバス描画
-      // 停車中
       let upStopBusesHtml = '';
       if (Array.isArray(stop.upboundBusesAtStop) && stop.upboundBusesAtStop.length > 0) {
         upStopBusesHtml = stop.upboundBusesAtStop.map(b => `
-          <div class="dt-bus-pill upbound at-stop ${escapeHtml(b.delayClass || 'delay-none')}">
+          <div class="dt-bus-pill upbound at-stop ${escapeHtml(b.delayClass || 'delay-none')}" title="上大岡行 (停車中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-bus-icon pulsing">🚍</span>
-            <span class="dt-bus-dir">↑ 停車中</span>
+            <span class="dt-bus-arrow">↑</span>
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
           </div>
         `).join('');
       }
 
-      // 区間走行中（上方向へ向かう）
       let upEnRouteBusesHtml = '';
       if (Array.isArray(stop.upboundBusesEnRoute) && stop.upboundBusesEnRoute.length > 0) {
         upEnRouteBusesHtml = stop.upboundBusesEnRoute.map(b => `
-          <div class="dt-bus-pill upbound en-route ${escapeHtml(b.delayClass || 'delay-none')}">
+          <div class="dt-bus-pill upbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" title="上大岡行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-bus-icon pulsing">🚍</span>
-            <span class="dt-bus-dir">↑ 走行中</span>
+            <span class="dt-bus-arrow">↑</span>
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
           </div>
         `).join('');
       }
 
       // 2. 右カラム: 下り線（港南台/根岸 行き）のバス描画
-      // 停車中
       let downStopBusesHtml = '';
       if (Array.isArray(stop.downboundBusesAtStop) && stop.downboundBusesAtStop.length > 0) {
         downStopBusesHtml = stop.downboundBusesAtStop.map(b => `
-          <div class="dt-bus-pill downbound at-stop ${escapeHtml(b.delayClass || 'delay-none')}">
+          <div class="dt-bus-pill downbound at-stop ${escapeHtml(b.delayClass || 'delay-none')}" title="下り行 (停車中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
-            <span class="dt-bus-dir">停車中 ↓</span>
+            <span class="dt-bus-arrow">↓</span>
             <span class="dt-bus-icon pulsing">🚍</span>
           </div>
         `).join('');
       }
 
-      // 区間走行中（下方向へ向かう）
       let downEnRouteBusesHtml = '';
       if (Array.isArray(stop.downboundBusesEnRoute) && stop.downboundBusesEnRoute.length > 0) {
         downEnRouteBusesHtml = stop.downboundBusesEnRoute.map(b => `
-          <div class="dt-bus-pill downbound en-route ${escapeHtml(b.delayClass || 'delay-none')}">
+          <div class="dt-bus-pill downbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" title="下り行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
-            <span class="dt-bus-dir">走行中 ↓</span>
+            <span class="dt-bus-arrow">↓</span>
             <span class="dt-bus-icon pulsing">🚍</span>
           </div>
         `).join('');
@@ -407,13 +433,13 @@ export class StepTimelineComponent {
         <div class="${rowClasses}" data-index="${i}">
           <!-- Left Track: Upbound -->
           <div class="dt-col-track upbound">
-            <div class="dt-line-wrapper">
-              <span class="dt-line upbound"></span>
-              <span class="dt-dot upbound ${isMajor ? 'major-dot' : ''}"></span>
-            </div>
             <div class="dt-bus-slot upbound">
               ${upStopBusesHtml}
               ${upEnRouteBusesHtml}
+            </div>
+            <div class="dt-line-wrapper">
+              <span class="dt-line upbound"></span>
+              <span class="dt-dot upbound ${isMajor ? 'major-dot' : ''}"></span>
             </div>
           </div>
 
@@ -427,13 +453,13 @@ export class StepTimelineComponent {
 
           <!-- Right Track: Downbound -->
           <div class="dt-col-track downbound">
-            <div class="dt-bus-slot downbound">
-              ${downStopBusesHtml}
-              ${downEnRouteBusesHtml}
-            </div>
             <div class="dt-line-wrapper">
               <span class="dt-line downbound"></span>
               <span class="dt-dot downbound ${isMajor ? 'major-dot' : ''}"></span>
+            </div>
+            <div class="dt-bus-slot downbound">
+              ${downStopBusesHtml}
+              ${downEnRouteBusesHtml}
             </div>
           </div>
         </div>

@@ -323,62 +323,16 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
   const poleStr = String(targetPoleOrName || '');
   const destStr = String(destination || '');
 
-  // 1. 111系統
-  if (str.includes('111') || poleStr.includes('7800') || poleStr.includes('1046') || destStr.includes('港南台') || destStr.includes('上大岡')) {
-    // 上大岡行（往路: 港南台 ➔ 洋光台北口 ➔ 上大岡）かどうか判定
-    const isOutbound =
-      direction === 'outbound' ||
-      destStr.includes('上大岡') ||
-      poleStr.includes('7800.1') ||
-      poleStr.includes('1046.5') ||
-      poleStr.includes('1046.13') ||
-      (str.includes('11100') && !destStr.includes('港南台') && !poleStr.includes('7800.2') && direction !== 'inbound');
-
-    // 港南台行（復路: 上大岡 ➔ 洋光台北口 ➔ 港南台）かどうか判定
-    const isInbound = !isOutbound && (
-      direction === 'inbound' ||
-      poleStr.includes('7800.2') ||
-      poleStr.includes('1046.6') ||
-      destStr.includes('港南台') ||
-      str.includes('11101')
-    );
-
-    if (isInbound) {
-      return ROUTES?.ROUTE_111?.stopsInbound || [
-        '上大岡駅前', '関の下', '笹下港南中央通', '港南区総合庁舎前', '吉原',
-        '新吉原橋', '日野公園墓地入口', '日野中央公園入口', '洋光台北口',
-        '洋光台二丁目', '西公園前', '洋光台駅前', '洋光台五丁目', 'バイパス下',
-        '港南台第一中学校前', '港南台第一小学校前', '臼杵', '港南環境センター前',
-        '榎戸', '横浜女子短大前', '港南台駅前'
-      ];
-    } else {
-      return ROUTES?.ROUTE_111?.stopsOutbound || [
-        '港南台駅前', '横浜女子短大前', '榎戸', '港南環境センター前', '臼杵',
-        '港南台第一小学校前', '港南台第一中学校前', 'バイパス下', '洋光台五丁目',
-        '洋光台駅前', '西公園前', '洋光台二丁目', '洋光台北口', '日野中央公園入口',
-        '日野公園墓地入口', '新吉原橋', '吉原', '港南区総合庁舎前', '笹下港南中央通',
-        '関の下', '上大岡駅前'
-      ];
-    }
-  }
-
-  // 2. 133系統
+  // 1. 133系統 (根岸駅前 〜 古泉 〜 上大岡駅前)
   if (str.includes('133') || poleStr.includes('1810') || destStr.includes('根岸') || (destStr.includes('上大岡') && (poleStr.includes('1810') || str.includes('133')))) {
-    const isOutbound =
-      direction === 'outbound' ||
-      str.includes('13303') ||
-      destStr.includes('根岸') ||
-      poleStr.includes('1046.12') ||
-      poleStr.includes('1810.2');
-
-    const isInbound = !isOutbound && (
-      direction === 'inbound' ||
-      str.includes('13300') ||
+    // 上大岡行（根岸 ➔ 古泉 ➔ 上大岡）の判定
+    const isUpboundToKamiooka =
+      destStr.includes('上大岡') ||
       poleStr.includes('1810.1') ||
-      destStr.includes('上大岡')
-    );
+      str.includes('13300') ||
+      (direction === 'inbound' && !destStr.includes('根岸') && !poleStr.includes('1810.2') && !poleStr.includes('1046.12'));
 
-    if (isInbound) {
+    if (isUpboundToKamiooka) {
       return ROUTES?.ROUTE_133?.stopsInbound || [
         '根岸駅前', 'プールセンター前', '下町', '坂下公園前', '滝頭',
         '市電保存館前', '滝頭地域ケアプラザ前', '仲之町', '古泉', '岡村町',
@@ -395,7 +349,7 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
     }
   }
 
-  // 3. 64系統
+  // 2. 64系統 (磯子駅前 〜 上笹堀 〜 上大岡駅前 〜 港南台駅前)
   if (str.includes('64') || str.includes('064') || destStr.includes('磯子')) {
     const isInbound =
       direction === 'inbound' ||
@@ -416,6 +370,35 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
         '新吉原橋', '吉原', '港南区総合庁舎前', '笹下港南中央通', '関の下',
         '上大岡駅前', '最戸橋', '越戸橋', '向田橋', '大岡交番前', '万福寺前',
         '上笹堀', '笹堀', '磯子駅前'
+      ];
+    }
+  }
+
+  // 3. 111系統 (港南台駅前 〜 洋光台北口 〜 上大岡駅前)
+  if (str.includes('111') || poleStr.includes('7800') || destStr.includes('港南台') || destStr.includes('上大岡') || poleStr.includes('1046')) {
+    // 港南台行（復路: 上大岡 ➔ 洋光台北口 ➔ 港南台）かどうか判定
+    const isDownboundToKonandai =
+      destStr.includes('港南台') ||
+      poleStr.includes('7800.2') ||
+      poleStr.includes('1046.6') ||
+      str.includes('11101') ||
+      (direction === 'inbound' && !destStr.includes('上大岡') && !poleStr.includes('7800.1'));
+
+    if (isDownboundToKonandai) {
+      return ROUTES?.ROUTE_111?.stopsInbound || [
+        '上大岡駅前', '関の下', '笹下港南中央通', '港南区総合庁舎前', '吉原',
+        '新吉原橋', '日野公園墓地入口', '日野中央公園入口', '洋光台北口',
+        '洋光台二丁目', '西公園前', '洋光台駅前', '洋光台五丁目', 'バイパス下',
+        '港南台第一中学校前', '港南台第一小学校前', '臼杵', '港南環境センター前',
+        '榎戸', '横浜女子短大前', '港南台駅前'
+      ];
+    } else {
+      return ROUTES?.ROUTE_111?.stopsOutbound || [
+        '港南台駅前', '横浜女子短大前', '榎戸', '港南環境センター前', '臼杵',
+        '港南台第一小学校前', '港南台第一中学校前', 'バイパス下', '洋光台五丁目',
+        '洋光台駅前', '西公園前', '洋光台二丁目', '洋光台北口', '日野中央公園入口',
+        '日野公園墓地入口', '新吉原橋', '吉原', '港南区総合庁舎前', '笹下港南中央通',
+        '関の下', '上大岡駅前'
       ];
     }
   }
@@ -481,17 +464,23 @@ export function formatStatusText(status, stopsAway, fromStopName = '', toStopNam
       return '当バス停に到着/停車中';
     case 'approaching':
       if (fromStopName) {
-        return `まもなく到着 (${fromStopName}を出発)`;
+        return `まもなく到着 (${fromStopName}発)`;
       }
       return 'まもなく到着';
     case 'en_route':
-      if (typeof stopsAway === 'number' && stopsAway >= 2) {
+      if (typeof stopsAway === 'number' && stopsAway >= 1) {
         if (fromStopName && toStopName) {
-          return `${stopsAway}個前 (${fromStopName}〜${toStopName}間) を走行中`;
+          return `${fromStopName}〜${toStopName}間 (${stopsAway}駅前)`;
         } else if (fromStopName) {
-          return `${stopsAway}個前 (${fromStopName}を出発) を走行中`;
+          return `${fromStopName}付近 (${stopsAway}駅前)`;
         }
-        return `${stopsAway}個前を走行中`;
+        return `${stopsAway}駅前を走行中`;
+      }
+      if (fromStopName && toStopName) {
+        return `${fromStopName}〜${toStopName}間 走行中`;
+      }
+      if (fromStopName) {
+        return `${fromStopName}付近 走行中`;
       }
       return '走行中';
     case 'passed':
