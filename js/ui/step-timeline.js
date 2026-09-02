@@ -282,14 +282,14 @@ export class StepTimelineComponent {
       else if (isTarget) nodeStateClass = 'target';
       else if (isPassed) nodeStateClass = 'passed';
 
-      // ノード（駅・バス停）: 重複や省略を防ぐスッキリしたノードドットとラベル
+      // ノード（駅・バス停）: 各停留所名と相対ラベルをスッキリ表示
       trackHtml += `
         <div class="h-node ${nodeStateClass} ${isTarget ? 'is-target' : ''}" data-index="${i}">
           <div class="h-node-dot-wrap">
             <span class="h-node-dot ${isTarget ? 'target-dot' : ''}"></span>
           </div>
           <span class="h-node-rel ${isTarget ? 'target-rel' : ''}">${escapeHtml(relLabel)}</span>
-          ${isTarget ? `<span class="h-node-target-name">${stopName}</span>` : ''}
+          <span class="h-node-name ${isTarget ? 'h-node-target-name' : ''}" title="${stopName}">${stopName}</span>
         </div>
       `;
 

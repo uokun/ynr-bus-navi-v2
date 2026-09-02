@@ -2245,12 +2245,24 @@ button, input, select {
   font-weight: 800;
 }
 
+.h-node-name {
+  font-size: 0.6rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  white-space: nowrap;
+  max-width: 52px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: center;
+  margin-top: 1px;
+}
+
+.h-node-name.h-node-target-name,
 .h-node-target-name {
   font-size: 0.68rem;
   font-weight: 800;
   color: var(--text-main);
-  white-space: nowrap;
-  margin-top: 1px;
+  max-width: 64px;
 }
 
 .h-segment {

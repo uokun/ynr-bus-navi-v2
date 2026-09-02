@@ -325,12 +325,18 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
 
   // 1. 133系統 (根岸駅前 〜 古泉 〜 上大岡駅前)
   if (str.includes('133') || poleStr.includes('1810') || destStr.includes('根岸') || (destStr.includes('上大岡') && (poleStr.includes('1810') || str.includes('133')))) {
-    // 上大岡行（根岸 ➔ 古泉 ➔ 上大岡）の判定
-    const isUpboundToKamiooka =
-      destStr.includes('上大岡') ||
-      poleStr.includes('1810.1') ||
-      str.includes('13300') ||
-      (direction === 'inbound' && !destStr.includes('根岸') && !poleStr.includes('1810.2') && !poleStr.includes('1046.12'));
+    let isUpboundToKamiooka = false;
+    if (str.includes('13300') || (str.includes('inbound') && !str.includes('13303')) || (direction === 'inbound' && !str.includes('13303') && !str.includes('13301'))) {
+      isUpboundToKamiooka = true;
+    } else if (str.includes('13303') || str.includes('13301') || (str.includes('outbound') && !str.includes('13300')) || (direction === 'outbound' && !str.includes('13300'))) {
+      isUpboundToKamiooka = false;
+    } else if (destStr.includes('上大岡')) {
+      isUpboundToKamiooka = true;
+    } else if (destStr.includes('根岸')) {
+      isUpboundToKamiooka = false;
+    } else if (poleStr.includes('1810.1') && !poleStr.includes('1810.2')) {
+      isUpboundToKamiooka = true;
+    }
 
     if (isUpboundToKamiooka) {
       return ROUTES?.ROUTE_133?.stopsInbound || [
@@ -352,10 +358,10 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
   // 2. 64系統 (磯子駅前 〜 上笹堀 〜 上大岡駅前 〜 港南台駅前)
   if (str.includes('64') || str.includes('064') || destStr.includes('磯子')) {
     const isInbound =
-      direction === 'inbound' ||
-      destStr.includes('港南台') ||
       str.includes('06406') ||
-      str.includes('06407');
+      str.includes('06407') ||
+      direction === 'inbound' ||
+      destStr.includes('港南台');
 
     if (isInbound) {
       return ROUTES?.ROUTE_64?.stopsInbound || [
@@ -376,13 +382,18 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
 
   // 3. 111系統 (港南台駅前 〜 洋光台北口 〜 上大岡駅前)
   if (str.includes('111') || poleStr.includes('7800') || destStr.includes('港南台') || destStr.includes('上大岡') || poleStr.includes('1046')) {
-    // 港南台行（復路: 上大岡 ➔ 洋光台北口 ➔ 港南台）かどうか判定
-    const isDownboundToKonandai =
-      destStr.includes('港南台') ||
-      poleStr.includes('7800.2') ||
-      poleStr.includes('1046.6') ||
-      str.includes('11101') ||
-      (direction === 'inbound' && !destStr.includes('上大岡') && !poleStr.includes('7800.1'));
+    let isDownboundToKonandai = false;
+    if (str.includes('11101') || (str.includes('inbound') && !str.includes('11100')) || (direction === 'inbound' && !str.includes('11100'))) {
+      isDownboundToKonandai = true;
+    } else if (str.includes('11100') || (str.includes('outbound') && !str.includes('11101')) || (direction === 'outbound' && !str.includes('11101'))) {
+      isDownboundToKonandai = false;
+    } else if (destStr.includes('港南台')) {
+      isDownboundToKonandai = true;
+    } else if (destStr.includes('上大岡')) {
+      isDownboundToKonandai = false;
+    } else if (poleStr.includes('7800.2') || poleStr.includes('1046.6')) {
+      isDownboundToKonandai = true;
+    }
 
     if (isDownboundToKonandai) {
       return ROUTES?.ROUTE_111?.stopsInbound || [
@@ -464,17 +475,17 @@ export function formatStatusText(status, stopsAway, fromStopName = '', toStopNam
       return '当バス停に到着/停車中';
     case 'approaching':
       if (fromStopName) {
-        return `まもなく到着 (${fromStopName}発)`;
+        return `まもなく到着 (${fromStopName}を出発)`;
       }
       return 'まもなく到着';
     case 'en_route':
       if (typeof stopsAway === 'number' && stopsAway >= 1) {
         if (fromStopName && toStopName) {
-          return `${fromStopName}〜${toStopName}間 (${stopsAway}駅前)`;
+          return `${stopsAway}個前 (${fromStopName}〜${toStopName}間) を走行中`;
         } else if (fromStopName) {
-          return `${fromStopName}付近 (${stopsAway}駅前)`;
+          return `${stopsAway}個前 (${fromStopName}付近) を走行中`;
         }
-        return `${stopsAway}駅前を走行中`;
+        return `${stopsAway}個前を走行中`;
       }
       if (fromStopName && toStopName) {
         return `${fromStopName}〜${toStopName}間 走行中`;
@@ -1082,6 +1093,7 @@ export class BusLocationService {
     const targetStopName = isYokodai ? '洋光台北口' : '古泉';
     const lineKey = isYokodai ? '111' : '133';
     const targetPoleId = isYokodai ? '7800.1' : '1810.1';
+    const dirToKamiooka = isYokodai ? 'outbound' : 'inbound';
 
     // 6つの停留所シーケンスを定義 (左から右: 手前5つ ➔ 当停留所)
     const stopSequence = isYokodai
@@ -1089,7 +1101,7 @@ export class BusLocationService {
       : ['坂下公園前', '滝頭', '市電保存館前', '滝頭地域ケアプラザ前', '仲之町', '古泉'];
 
     // 全ルートリスト（インデックス計算用）
-    const fullStops = getStopsForRoute(lineKey, 'inbound', targetPoleId, '上大岡駅前');
+    const fullStops = getStopsForRoute(lineKey, dirToKamiooka, targetPoleId, '上大岡駅前');
     const targetIdx = findStopIndex(fullStops, targetStopName);
 
     // 該当路線・上大岡行きのバスから、当停留所に最も近いバスを探す
@@ -1111,7 +1123,7 @@ export class BusLocationService {
         }
 
         const status = this.getBusLocationStatus(bus, targetPoleId, lineKey, {
-          direction: 'inbound',
+          direction: dirToKamiooka,
           destination: '上大岡駅前',
           maxTimelineNodes: 6
         });
@@ -1130,7 +1142,7 @@ export class BusLocationService {
     // バスが見つからなかった場合はデフォルト予定状態
     if (!closestBus || !closestStatus) {
       const defaultStatus = this.getBusLocationStatus(null, targetPoleId, lineKey, {
-        direction: 'inbound',
+        direction: dirToKamiooka,
         destination: '上大岡駅前',
         maxTimelineNodes: 6
       });
@@ -1188,15 +1200,15 @@ export class BusLocationService {
         percent = 50;
       } else {
         // 5つ前よりさらに手前
-        segmentIndex = 0;
-        percent = 10;
+        segmentIndex = -1;
+        percent = 0;
       }
     }
 
     const stops = stopSequence.map((name, i) => {
       const isTarget = (i === stopSequence.length - 1);
       const isCurrent = (isAtStop && atStopIndex === i);
-      const isPassed = (!isAtStop && segmentIndex > i) || (isAtStop && atStopIndex > i);
+      const isPassed = (!isAtStop && segmentIndex !== -1 && segmentIndex > i) || (isAtStop && atStopIndex > i);
       const rel = stopSequence.length - 1 - i;
 
       return {
@@ -1309,7 +1321,12 @@ export class BusLocationService {
         const toIdx = stopMasterList.indexOf(toName);
 
         const destName = getStopNameFromPole(bus['odpt:destinationBusstopPole'] || bus['odpt:terminalBusstopPole'] || '');
-        const isUpbound = destName.includes('上大岡') || (fromIdx !== -1 && toIdx !== -1 && fromIdx > toIdx);
+        const patternStr = bus['odpt:busroutePattern'] || '';
+        const isUpbound =
+          destName.includes('上大岡') ||
+          patternStr.includes('11100') ||
+          patternStr.includes('13300') ||
+          (fromIdx !== -1 && toIdx !== -1 && fromIdx > toIdx);
 
         const rawDelay = (typeof bus['odpt:delay'] === 'number') ? bus['odpt:delay'] : (bus.delaySeconds || 0);
         const delayInfo = formatDelayText(rawDelay);
