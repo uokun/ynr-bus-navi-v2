@@ -383,9 +383,9 @@ export function getStopsForRoute(routePatternIdOrLine, direction = null, targetP
   // 3. 111系統 (港南台駅前 〜 洋光台北口 〜 上大岡駅前)
   if (str.includes('111') || poleStr.includes('7800') || destStr.includes('港南台') || destStr.includes('上大岡') || poleStr.includes('1046')) {
     let isDownboundToKonandai = false;
-    if (str.includes('11101') || (str.includes('inbound') && !str.includes('11100')) || (direction === 'inbound' && !str.includes('11100'))) {
+    if (str.includes('11100') || (str.includes('inbound') && !str.includes('11101')) || (direction === 'inbound' && !str.includes('11101'))) {
       isDownboundToKonandai = true;
-    } else if (str.includes('11100') || (str.includes('outbound') && !str.includes('11101')) || (direction === 'outbound' && !str.includes('11101'))) {
+    } else if (str.includes('11101') || (str.includes('outbound') && !str.includes('11100')) || (direction === 'outbound' && !str.includes('11100'))) {
       isDownboundToKonandai = false;
     } else if (destStr.includes('港南台')) {
       isDownboundToKonandai = true;
@@ -1344,11 +1344,20 @@ export class BusLocationService {
 
         const destName = getStopNameFromPole(bus['odpt:destinationBusstopPole'] || bus['odpt:terminalBusstopPole'] || '');
         const patternStr = bus['odpt:busroutePattern'] || '';
-        const isUpbound =
-          destName.includes('上大岡') ||
-          patternStr.includes('11100') ||
-          patternStr.includes('13300') ||
-          (fromIdx !== -1 && toIdx !== -1 && fromIdx > toIdx);
+        let isUpbound = false;
+        if (destName.includes('上大岡')) {
+          isUpbound = true;
+        } else if (destName.includes('港南台') || destName.includes('根岸')) {
+          isUpbound = false;
+        } else if (patternStr.includes('11101') || patternStr.includes('13300')) {
+          isUpbound = true;
+        } else if (patternStr.includes('11100') || patternStr.includes('13303')) {
+          isUpbound = false;
+        } else if (fromIdx !== -1 && toIdx !== -1) {
+          isUpbound = (fromIdx > toIdx);
+        } else if (fromIdx !== -1) {
+          isUpbound = (fromIdx > Math.floor(stopMasterList.length / 2));
+        }
 
         const rawDelay = (typeof bus['odpt:delay'] === 'number') ? bus['odpt:delay'] : (bus.delaySeconds || 0);
         const delayInfo = formatDelayText(rawDelay);
