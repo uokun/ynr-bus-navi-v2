@@ -391,7 +391,7 @@ export class StepTimelineComponent {
       let upEnRouteBusesHtml = '';
       if (Array.isArray(stop.upboundBusesEnRoute) && stop.upboundBusesEnRoute.length > 0) {
         upEnRouteBusesHtml = stop.upboundBusesEnRoute.map(b => `
-          <div class="dt-bus-pill upbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" title="上大岡行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
+          <div class="dt-bus-pill upbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" style="transform: translateY(-20px); z-index: 5;" title="上大岡行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-bus-icon pulsing">🚍</span>
             <span class="dt-bus-arrow">↑</span>
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
@@ -414,7 +414,7 @@ export class StepTimelineComponent {
       let downEnRouteBusesHtml = '';
       if (Array.isArray(stop.downboundBusesEnRoute) && stop.downboundBusesEnRoute.length > 0) {
         downEnRouteBusesHtml = stop.downboundBusesEnRoute.map(b => `
-          <div class="dt-bus-pill downbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" title="下り行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
+          <div class="dt-bus-pill downbound en-route ${escapeHtml(b.delayClass || 'delay-none')}" style="transform: translateY(20px); z-index: 5;" title="下り行 (走行中 / ${escapeHtml(b.delayText || '定刻')})">
             <span class="dt-delay-badge">${escapeHtml(b.delayText || '定刻')}</span>
             <span class="dt-bus-arrow">↓</span>
             <span class="dt-bus-icon pulsing">🚍</span>

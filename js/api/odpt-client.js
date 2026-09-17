@@ -6,23 +6,40 @@
 
 import { CONFIG, API_BASE, OPERATOR_ID, CACHE_TTL } from '../config.js';
 import { storageService } from '../services/storage-service.js';
-import { REAL_TIMETABLES } from './real-timetable-data.js';
 
-function normalizeDestination(dest, lineName, stopId) {
-  if (!dest || dest.includes('') || dest.includes('大岡駅前') || dest.includes('港') || dest.includes('根岸')) {
+/**
+ * ODPT APIのdestinationSignを正規化する。
+ * dest.includes('') による常時真判定を完全排除し、
+ * 文字列判定を最優先とし、未指定・文字化け時のみポールIDから安全に推測する。
+ */
+export function normalizeDestination(dest, lineName, stopId) {
+  const clean = String(dest || '').replace(/[\uFFFD\s]+/g, ' ').trim();
+
+  // 1. 文字列キーワードによる明示的判定（最優先・異体字対応）
+  if (clean.includes('上大岡') || clean.includes('大岡駅前') || clean.includes('大崗')) return '上大岡駅前 行';
+  if (clean.includes('港南台')) return '港南台駅前 行';
+  if (clean.includes('洋光台') || clean.includes('洋光臺')) return '洋光台駅前 行';
+  if (clean.includes('根岸') || clean.includes('根岸驛')) return '根岸駅前 行';
+  if (clean.includes('磯子')) return '磯子駅前 行';
+  if (clean.includes('滝頭')) return '滝頭 行';
+
+  // 2. 文字列判定が不能（cleanが空）な場合のみ、ポールIDと系統によるフォールバック
+  if (!clean) {
+    const sId = String(stopId || '');
     if (lineName === '111系統') {
-      if (stopId && (stopId.endsWith('.1') || stopId.endsWith('.13'))) return '上大岡駅前 行';
-      if (dest && dest.includes('洋光台')) return '洋光台駅前 行';
+      if (sId.endsWith('.1') || sId.endsWith('.13')) return '上大岡駅前 行';
+      if (sId.endsWith('.2') || sId.endsWith('.6')) return '港南台駅前 行';
       return '港南台駅前 行';
     } else if (lineName === '133系統') {
-      return (stopId && stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+      if (sId.endsWith('.1')) return '上大岡駅前 行';
+      if (sId.endsWith('.2') || sId.endsWith('.12')) return '根岸駅前 行';
+      return '根岸駅前 行';
     }
+    return '運行予定';
   }
-  if (!dest) {
-    if (lineName === '111系統') return (stopId && (stopId.endsWith('.1') || stopId.endsWith('.13'))) ? '上大岡駅前 行' : '港南台駅前 行';
-    if (lineName === '133系統') return (stopId && stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
-  }
-  return dest.endsWith('行') ? dest : `${dest} 行`;
+
+  // 3. その他（未知の行先・回送・臨時等の正常な文字列をそのまま保持）
+  return clean.endsWith('行') ? clean : `${clean} 行`;
 }
 
 export class OdptClient {
@@ -183,6 +200,9 @@ export class OdptClient {
 
   clearTimetableCache() {
     this._timetableCache = null;
+    if (this.storage && typeof this.storage.remove === 'function') {
+      this.storage.remove('odpt:indexed_timetables:v2');
+    }
   }
 
   async _fetchAndIndexTimetables() {
@@ -296,17 +316,6 @@ export class OdptClient {
 
       if (matchedKey && this._timetableCache[matchedKey] && this._timetableCache[matchedKey][dayType]) {
         return this._timetableCache[matchedKey][dayType];
-      }
-    }
-
-    // 2. Fallback to built-in full verified timetable dataset
-    if (REAL_TIMETABLES) {
-      let matchedKey = poleId;
-      if (!REAL_TIMETABLES[matchedKey]) {
-        matchedKey = Object.keys(REAL_TIMETABLES).find(k => k.includes(poleId) || (poleId && poleId.includes(k)));
-      }
-      if (matchedKey && REAL_TIMETABLES[matchedKey] && REAL_TIMETABLES[matchedKey][dayType]) {
-        return REAL_TIMETABLES[matchedKey][dayType];
       }
     }
 

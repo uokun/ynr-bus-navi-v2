@@ -13,7 +13,8 @@ const TARGET_STOPS = {
   'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6': '上大岡駅前 6番のりば (洋光台・港南台方面)',
   'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.12': '上大岡駅前 12番のりば (古泉・根岸方面)',
   'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.13': '上大岡駅前 13番降車場',
-  'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1': '古泉 1番のりば (上大岡駅前方面)'
+  'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1': '古泉 1番のりば (上大岡駅前方面)',
+  'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.2': '古泉 2番のりば (根岸駅前方面)'
 };
 
 function fetchJson(url) {
@@ -33,20 +34,33 @@ function fetchJson(url) {
 }
 
 function sanitizeDestination(dest, lineName, stopId) {
-  if (!dest || dest.includes('') || dest.includes('大岡駅前') || dest.includes('港') || dest.includes('根岸')) {
+  const clean = String(dest || '').replace(/[\uFFFD\s]+/g, ' ').trim();
+
+  // 1. 文字列キーワードによる明示的判定（最優先・異体字対応）
+  if (clean.includes('上大岡') || clean.includes('大岡駅前') || clean.includes('大崗')) return '上大岡駅前 行';
+  if (clean.includes('港南台')) return '港南台駅前 行';
+  if (clean.includes('洋光台') || clean.includes('洋光臺')) return '洋光台駅前 行';
+  if (clean.includes('根岸') || clean.includes('根岸驛')) return '根岸駅前 行';
+  if (clean.includes('磯子')) return '磯子駅前 行';
+  if (clean.includes('滝頭')) return '滝頭 行';
+
+  // 2. 文字列判定が不能（cleanが空）な場合のみ、ポールIDと系統によるフォールバック
+  if (!clean) {
+    const sId = String(stopId || '');
     if (lineName === '111系統') {
-      if (stopId.endsWith('.1') || stopId.endsWith('.13')) return '上大岡駅前 行';
-      if (dest && dest.includes('洋光台')) return '洋光台駅前 行';
+      if (sId.endsWith('.1') || sId.endsWith('.13')) return '上大岡駅前 行';
+      if (sId.endsWith('.2') || sId.endsWith('.6')) return '港南台駅前 行';
       return '港南台駅前 行';
     } else if (lineName === '133系統') {
-      return (stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
+      if (sId.endsWith('.1')) return '上大岡駅前 行';
+      if (sId.endsWith('.2') || sId.endsWith('.12')) return '根岸駅前 行';
+      return '根岸駅前 行';
     }
+    return '運行予定';
   }
-  if (!dest) {
-    if (lineName === '111系統') return (stopId.endsWith('.1') || stopId.endsWith('.13')) ? '上大岡駅前 行' : '港南台駅前 行';
-    if (lineName === '133系統') return (stopId.endsWith('.1')) ? '上大岡駅前 行' : '根岸駅前 行';
-  }
-  return dest.endsWith('行') ? dest : `${dest} 行`;
+
+  // 3. その他（未知の行先・回送・臨時等の正常な文字列をそのまま保持）
+  return clean.endsWith('行') ? clean : `${clean} 行`;
 }
 
 async function main() {

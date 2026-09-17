@@ -72,10 +72,27 @@ export class TransferService {
           to: '洋光台北口',
           destinationLabel: '港南台駅前 行 (洋光台北口経由)',
           durationMinutes: 15,
-          platform: '11番のりば'
+          platform: '6番のりば'
         }
       }
     };
+  }
+
+  /**
+   * 現在時刻または基準時刻を元に日跨ぎ分数を正規化
+   * （基準時刻が21時(1260分)以降で、便が未明(0〜4時、240分未満)の場合は翌日未明便として+1440分にシフト）
+   * @param {number} depMin 
+   * @param {number} referenceMin 
+   * @returns {number}
+   */
+  normalizeMinutesForComparison(depMin, referenceMin) {
+    if (referenceMin >= 21 * 60 && depMin < 4 * 60) {
+      return depMin + 1440;
+    }
+    if (referenceMin < 4 * 60 && depMin >= 21 * 60) {
+      return depMin - 1440;
+    }
+    return depMin;
   }
 
   /**
@@ -129,12 +146,13 @@ export class TransferService {
 
       const dep1Min = this.timetableService.timeStringToMinutes(b1.departureTime);
       const delay1 = delays[b1.busId] || delays[b1.line] || b1.delayMinutes || 0;
-      const actualDep1 = dep1Min + delay1;
+      const actualDep1Raw = dep1Min + delay1;
+      const normDep1 = this.normalizeMinutesForComparison(actualDep1Raw, curMinutes);
 
       // Must be future departure or departing now
-      if (actualDep1 < curMinutes) continue;
+      if (normDep1 < curMinutes) continue;
 
-      const arr1Min = actualDep1 + leg1TravelTime;
+      const arr1Min = normDep1 + leg1TravelTime;
       const minConnectingTime = arr1Min + buffer;
 
       // Find suitable Leg 2 departures
@@ -143,28 +161,29 @@ export class TransferService {
 
         const dep2Min = this.timetableService.timeStringToMinutes(b2.departureTime);
         const delay2 = delays[b2.busId] || delays[b2.line] || b2.delayMinutes || 0;
-        const actualDep2 = dep2Min + delay2;
+        const actualDep2Raw = dep2Min + delay2;
+        const normDep2 = this.normalizeMinutesForComparison(actualDep2Raw, normDep1);
 
-        if (actualDep2 >= minConnectingTime) {
-          const waitMinutes = actualDep2 - arr1Min;
-          const arr2Min = actualDep2 + leg2TravelTime;
+        if (normDep2 >= minConnectingTime) {
+          const waitMinutes = normDep2 - arr1Min;
+          const arr2Min = normDep2 + leg2TravelTime;
 
           validOptions.push({
             leg1: {
               ...b1,
-              actualDepartureTime: this.timetableService.minutesToTimeString(actualDep1),
+              actualDepartureTime: this.timetableService.minutesToTimeString(normDep1),
               estimatedArrivalTime: this.timetableService.minutesToTimeString(arr1Min),
               delayMinutes: delay1
             },
             leg2: {
               ...b2,
-              actualDepartureTime: this.timetableService.minutesToTimeString(actualDep2),
+              actualDepartureTime: this.timetableService.minutesToTimeString(normDep2),
               estimatedArrivalTime: this.timetableService.minutesToTimeString(arr2Min),
               delayMinutes: delay2
             },
-            transferWaitMinutes: waitMinutes,
+            transferWaitMinutes: Math.max(0, waitMinutes),
             bufferMinutes: buffer,
-            totalDurationMinutes: arr2Min - actualDep1
+            totalDurationMinutes: arr2Min - normDep1
           });
           break; // Found the best match for this Leg 1 bus
         }

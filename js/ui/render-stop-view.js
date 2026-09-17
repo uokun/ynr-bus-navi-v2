@@ -20,7 +20,8 @@ export const STOP_PLATFORMS = {
     { pole: '6', label: '洋光台方面', poleId: 'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6' }
   ],
   koizumi: [
-    { pole: '1', label: '上大岡方面', poleId: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1' }
+    { pole: '1', label: '上大岡方面', poleId: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1' },
+    { pole: '2', label: '根岸方面', poleId: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.2' }
   ]
 };
 
@@ -109,11 +110,12 @@ export function renderStopViews(containerOrState, maybeData = null) {
 
   // If container is provided, render full mobile stop UI
   if (container) {
-    // 1. Top Stop Switcher (洋光台北口 / 上大岡駅前 / 古泉)
+    // 1. Top Stop Switcher (洋光台北口 / 上大岡駅前 / 古泉) + 現在地ボタン
     let stopTabsHtml = Object.entries(STOP_DISPLAY_NAMES).map(([key, name]) => {
       const isActive = (key === activeStopKey);
       return `<button class="stop-tab-btn ${isActive ? 'active' : ''}" data-stop-key="${key}">${name}</button>`;
     }).join('');
+    stopTabsHtml += `<button id="btn-geo-stops" class="stop-tab-btn" style="flex:0 0 auto; padding:6px 12px; font-weight:700;" title="現在地から最寄り停留所を設定">📍 現在地</button>`;
 
     // 2. Sub-mode Selector ("⏱ 直近発車便" vs "📖 全時刻表")
     const isTimetableMode = (subMode === 'timetable');
@@ -128,7 +130,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
       </div>
     `;
 
-    // 3. Platform Selector (上大岡駅前のみ「12番 古泉方面」「6番 洋光台方面」を表示)
+    // 3. Platform Selector (上大岡駅前「12番 古泉方面」「6番 洋光台方面」、古泉「1番 上大岡方面」「2番 根岸方面」)
     let platformSelectorHtml = '';
     if (platforms.length > 1) {
       let platformPillsHtml = platforms.map(p => {
@@ -144,7 +146,21 @@ export function renderStopViews(containerOrState, maybeData = null) {
 
     let mainContentHtml = '';
 
-    if (isTimetableMode) {
+    const isApiKeyMissing = (data.hasApiKey === false);
+    if (isApiKeyMissing) {
+      mainContentHtml = `
+        <div class="card api-key-required-card" style="padding:28px 20px; text-align:center; margin-top:12px; border:1px solid var(--border-color); background:var(--surface-color); border-radius:var(--radius-lg);">
+          <div style="font-size:2.4rem; margin-bottom:12px;">⚠️</div>
+          <h3 style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin-bottom:8px;">APIキーを設定してください</h3>
+          <p style="font-size:0.85rem; color:var(--text-sub); line-height:1.5; margin-bottom:20px; max-width:340px; margin-left:auto; margin-right:auto;">
+            公共交通オープンデータ（ODPT）APIキーが設定されていないため、運行情報・時刻表を取得できません。
+          </p>
+          <button class="btn-primary-large btn-goto-settings" onclick="if(window.app) window.app.switchTab('view-settings');" style="max-width:240px; margin:0 auto; padding:12px 20px; font-size:0.9rem; font-weight:700;">
+            ⚙️ 設定画面を開く
+          </button>
+        </div>
+      `;
+    } else if (isTimetableMode) {
       // --- Timetable Mode (インライン全時間帯時刻表) ---
       const fullTimetableList = data.fullTimetable || [];
       mainContentHtml = renderInlineTimetableGrid({
@@ -161,7 +177,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
       let firstTimelineHtml = '';
 
       // 手前5停留所の横並び接近プログレスバー (洋光台北口 / 古泉) または始発案内 (上大岡駅前)
-      const approachingData = busLocationService.get5StopApproachingStatus(data.realtimeBuses || [], activeStopKey);
+      const approachingData = busLocationService.get5StopApproachingStatus(data.realtimeBuses || [], activeStopKey, activePole);
       const approachingProgressBarHtml = stepTimelineComponent.renderHorizontal5StopProgressBar(approachingData);
 
       if (firstDep) {

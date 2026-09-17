@@ -34,8 +34,25 @@ export function renderRouteMapView(container, mapState = {}) {
 
   const {
     activeLine = '111',
-    realtimeBuses = []
+    realtimeBuses = [],
+    hasApiKey = true
   } = mapState;
+
+  if (hasApiKey === false) {
+    container.innerHTML = `
+      <div class="card api-key-required-card" style="padding:28px 20px; text-align:center; margin:16px 0; border:1px solid var(--border-color); background:var(--surface-color); border-radius:var(--radius-lg);">
+        <div style="font-size:2.4rem; margin-bottom:12px;">⚠️</div>
+        <h3 style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin-bottom:8px;">APIキーを設定してください</h3>
+        <p style="font-size:0.85rem; color:var(--text-sub); line-height:1.5; margin-bottom:20px; max-width:340px; margin-left:auto; margin-right:auto;">
+          公共交通オープンデータ（ODPT）APIキーが設定されていないため、リアルタイム走行位置を取得できません。
+        </p>
+        <button class="btn-primary-large btn-goto-settings" onclick="if(window.app) window.app.switchTab('view-settings');" style="max-width:240px; margin:0 auto; padding:12px 20px; font-size:0.9rem; font-weight:700;">
+          ⚙️ 設定画面を開く
+        </button>
+      </div>
+    `;
+    return;
+  }
 
   const safeLine = (activeLine === '133') ? '133' : '111';
   const cfg = ROUTE_MAP_CONFIGS[safeLine] || ROUTE_MAP_CONFIGS['111'];

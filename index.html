@@ -20,6 +20,24 @@
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/responsive.css">
   <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* 複線路線図: 走行中バスのオフセットと矢印アニメーション */
+    .dt-col-track.upbound .dt-bus-pill.en-route {
+      transform: translateY(-20px);
+      z-index: 5;
+    }
+    .dt-col-track.downbound .dt-bus-pill.en-route {
+      transform: translateY(20px);
+      z-index: 5;
+    }
+    .dt-bus-pill.en-route .dt-bus-arrow {
+      animation: dt-arrow-pulse 1.5s infinite ease-in-out;
+    }
+    @keyframes dt-arrow-pulse {
+      0%, 100% { opacity: 0.8; transform: translateY(0); }
+      50% { opacity: 1; transform: translateY(-2px); }
+    }
+  </style>
 </head>
 <body>
   <div class="app-container">
@@ -208,7 +226,7 @@
             <div class="setting-item-block">
               <label class="setting-title" for="input-api-key">公共交通オープンデータセンター API Key</label>
               <p class="setting-desc">リアルタイム在線位置の取得に使用します。キーはブラウザ内（LocalStorage）にのみ安全に保存されます。（<a href="https://developer.odpt.org/" target="_blank" rel="noopener" style="color:var(--primary-color);text-decoration:underline;">ODPT開発者ポータル</a>で無料発行可能）</p>
-              <input type="text" id="input-api-key" placeholder="API Key を入力 (未設定時は時刻表のみ表示)" class="setting-text-input" autocomplete="off" spellcheck="false">
+              <input type="text" id="input-api-key" placeholder="API Key を入力 (ODPTポータルで無料発行)" class="setting-text-input" autocomplete="off" spellcheck="false">
               <div class="setting-input-actions" style="margin-top:6px;">
                 <button id="btn-reset-api-key" class="btn-text-action">キーを消去</button>
               </div>

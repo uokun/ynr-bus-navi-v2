@@ -110,32 +110,6 @@ export class App {
       this.onStateChanged(newState, changedKeys);
     });
 
-    // 4. Geolocation based initial navigation and stop selection
-    try {
-      const geoNav = await locationService.determineInitialNavigation();
-      if (geoNav) {
-        if (geoNav.nearestStopKey === 'kamiooka') {
-          this.activeStopKey = 'kamiooka';
-          this.currentTab = 'view-stops';
-        } else if (geoNav.nearestStopKey === 'koizumi') {
-          this.direction = 'inbound';
-          this.activeStopKey = 'koizumi';
-          this.currentTab = 'view-transfer';
-        } else if (geoNav.nearestStopKey === 'yokodai') {
-          this.direction = 'outbound';
-          this.activeStopKey = 'yokodai';
-          this.currentTab = 'view-transfer';
-        }
-        this.state.setState({
-          direction: this.direction,
-          currentTab: (this.currentTab === 'view-stops') ? `stop-${this.activeStopKey}` : 'transfer'
-        });
-        this.switchTab(this.currentTab);
-      }
-    } catch (e) {
-      console.warn('[App] Geolocation init check failed:', e);
-    }
-
     return this;
   }
 
@@ -341,9 +315,26 @@ export class App {
         return;
       }
 
+      // (b2) Manual Geolocation Trigger Buttons
+      const geoTransferBtn = getClosest(e.target, '#btn-geo-transfer');
+      if (geoTransferBtn) {
+        this.handleManualGeolocation('transfer');
+        return;
+      }
+      const geoStopsBtn = getClosest(e.target, '#btn-geo-stops');
+      if (geoStopsBtn) {
+        this.handleManualGeolocation('stops');
+        return;
+      }
+      const gotoSettingsBtn = getClosest(e.target, '.btn-goto-settings') || getClosest(e.target, '[data-action="open-settings"]');
+      if (gotoSettingsBtn) {
+        this.switchTab('view-settings');
+        return;
+      }
+
       // (c) Stop Tab Segmented Control in Stop View
       const stopTab = getClosest(e.target, '.stop-tab-btn');
-      if (stopTab) {
+      if (stopTab && (stopTab.dataset?.stopKey || stopTab.getAttribute('data-stop-key'))) {
         this.activeStopKey = stopTab.dataset?.stopKey || stopTab.getAttribute('data-stop-key');
         const platforms = STOP_PLATFORMS[this.activeStopKey] || [];
         if (!platforms.find(p => String(p.pole) === String(this.activePoles[this.activeStopKey]))) {
@@ -447,6 +438,7 @@ export class App {
           this.state.setState({ theme: thVal });
         }
         storageService.clearCache();
+        odptClient.clearTimetableCache();
         showToast('設定を保存しました。運行データを取得中...', 'success', 2000);
         this.switchTab('view-transfer');
         this.refreshData();
@@ -460,8 +452,9 @@ export class App {
         const apiKeyEl = document.getElementById('input-api-key') || document.getElementById('api-key-input');
         if (apiKeyEl) apiKeyEl.value = '';
         storageService.clearCache();
+        odptClient.clearTimetableCache();
         showToast('APIキーを消去しました', 'info');
-        this.refreshData();
+        this.renderAll();
         return;
       }
 
@@ -474,6 +467,73 @@ export class App {
         return;
       }
     });
+  }
+
+  /**
+   * 手動位置情報トリガーハンドラ
+   * ユーザーの明示的タップ時のみ動作し、最寄り停留所・ルートを設定する。
+   * @param {'transfer'|'stops'} context
+   */
+  async handleManualGeolocation(context = 'transfer') {
+    const geoBtn = (typeof document !== 'undefined')
+      ? document.querySelector(context === 'transfer' ? '#btn-geo-transfer' : '#btn-geo-stops')
+      : null;
+
+    if (geoBtn) {
+      geoBtn.classList.add('loading');
+      geoBtn.textContent = '📍 取得中...';
+    }
+
+    try {
+      const coords = await locationService.getCurrentPosition({ timeout: 6000, enableHighAccuracy: true });
+      if (!coords) {
+        showToast('現在地を取得できませんでした。位置情報の利用を許可してください。', 'warning');
+        return;
+      }
+
+      const nearest = locationService.getNearestStop(coords);
+      if (!nearest || !nearest.stopKey) {
+        showToast('最寄りの停留所を特定できませんでした', 'warning');
+        return;
+      }
+
+      const { stopKey, distance } = nearest;
+      if (distance > 5000) {
+        showToast(`現在地が運行エリア外です（最寄りの${STOPS[stopKey.toUpperCase()]?.name || ''}を設定）`, 'info');
+      }
+
+      if (context === 'transfer') {
+        if (stopKey === 'koizumi') {
+          this.direction = 'inbound';
+          this.activeStopKey = 'koizumi';
+        } else if (stopKey === 'kamiooka') {
+          this.activeStopKey = 'kamiooka';
+          this.switchTab('view-stops');
+          return;
+        } else {
+          this.direction = 'outbound';
+          this.activeStopKey = 'yokodai';
+        }
+        this.state.setState({
+          direction: this.direction,
+          currentTab: 'transfer'
+        });
+        this.renderAll();
+      } else {
+        this.activeStopKey = stopKey;
+        this.state.setState({ currentTab: `stop-${stopKey}` });
+        this.renderStopsView();
+      }
+      showToast(`最寄りの停留所【${STOPS[stopKey.toUpperCase()]?.name || ''}】を設定しました`, 'success');
+    } catch (e) {
+      console.warn('[App] Manual geolocation failed:', e);
+      showToast('位置情報の取得に失敗しました', 'warning');
+    } finally {
+      if (geoBtn) {
+        geoBtn.classList.remove('loading');
+        geoBtn.textContent = '📍 現在地';
+      }
+    }
   }
 
   toggleDirection() {
@@ -533,15 +593,6 @@ export class App {
 
   switchTab(viewId, isManualStopPick = false) {
     this.currentTab = viewId;
-
-    if (viewId === 'view-stops' && !isManualStopPick) {
-      if (locationService.cachedPosition) {
-        const nearest = locationService.getNearestStop(locationService.cachedPosition);
-        if (nearest && nearest.stopKey) {
-          this.activeStopKey = nearest.stopKey;
-        }
-      }
-    }
 
     if (typeof document !== 'undefined') {
       const navItems = document.querySelectorAll('.bottom-nav-item, .nav-item');
@@ -647,6 +698,14 @@ export class App {
   }
 
   async renderAll() {
+    const hasKey = storageService.hasApiKey();
+    if (!hasKey) {
+      this.renderTransferView();
+      this.renderStopsView();
+      this.renderRouteMapView();
+      this.syncSemanticElements(this.state.getState());
+      return;
+    }
     await this.renderTransferView();
     await this.renderStopsView();
     this.renderRouteMapView();
@@ -670,7 +729,26 @@ export class App {
     const container = this.els.transferContainer;
 
     try {
+      const hasKey = storageService.hasApiKey();
       const buffer = storageService.getTransferBuffer() ?? this.state.getState().bufferMinutes ?? 0;
+
+      if (!hasKey) {
+        if (container) {
+          renderMainTransfer(container, {
+            recommended: null,
+            alternatives: [],
+            direction: this.direction,
+            buffer: buffer,
+            hasApiKey: false,
+            status: 'no_api_key',
+            originName: this.direction === 'outbound' ? '洋光台北口' : '古泉',
+            destName: this.direction === 'outbound' ? '古泉' : '洋光台北口'
+          });
+        }
+        renderMainTransfer(this.state.getState());
+        return;
+      }
+
       const now = new Date();
       const calType = calendarService.getCalendarType(now);
 
@@ -704,7 +782,6 @@ export class App {
         currentTime: now
       });
 
-      const hasKey = storageService.hasApiKey();
       const hasTimetables = (tt1.length > 0 && tt2.length > 0);
       let routeStatus = 'ok';
       if (!hasKey) {
@@ -744,7 +821,26 @@ export class App {
     const container = this.els.stopsContainer;
 
     try {
+      const hasKey = storageService.hasApiKey();
       const poleNum = this.activePoles[this.activeStopKey] || (this.activeStopKey === 'kamiooka' ? '12' : '1');
+      if (!hasKey) {
+        if (container) {
+          renderStopViews(container, {
+            activeStopKey: this.activeStopKey,
+            activePole: poleNum,
+            subMode: this.stopSubMode,
+            calType: 'Weekday',
+            fullTimetable: [],
+            filter: 'all',
+            activeFilter: 'all',
+            departures: [],
+            realtimeBuses: [],
+            hasApiKey: false
+          });
+        }
+        return;
+      }
+
       const platforms = STOP_PLATFORMS[this.activeStopKey] || STOP_PLATFORMS.yokodai;
       const matched = platforms.find(p => String(p.pole) === String(poleNum)) || platforms[0];
       const poleId = matched?.poleId || '7800.1';
@@ -773,7 +869,8 @@ export class App {
           filter: filter,
           activeFilter: filter,
           departures: departures,
-          realtimeBuses: this.realtimeBuses
+          realtimeBuses: this.realtimeBuses,
+          hasApiKey: hasKey
         });
       }
 
@@ -788,7 +885,8 @@ export class App {
         filter: filter,
         activeFilter: filter,
         departures: departures,
-        realtimeBuses: this.realtimeBuses
+        realtimeBuses: this.realtimeBuses,
+        hasApiKey: hasKey
       });
 
     } catch (err) {
@@ -807,7 +905,8 @@ export class App {
     renderRouteMapView(container, {
       activeLine: this.activeMapLine,
       activeDirection: this.activeMapDir,
-      realtimeBuses: this.realtimeBuses
+      realtimeBuses: this.realtimeBuses,
+      hasApiKey: storageService.hasApiKey()
     });
   }
 

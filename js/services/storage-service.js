@@ -71,14 +71,23 @@ export class StorageService {
   }
 
   _removeItem(key) {
+    const storage = this._getStorage();
     try {
-      if (this._storage) {
-        this._storage.removeItem(key);
+      if (storage) {
+        storage.removeItem(key);
       }
     } catch {
       // Ignore
     }
     this._memoryFallback.delete(key);
+  }
+
+  /**
+   * Alias for _removeItem for API compatibility (e.g. odptClient.clearTimetableCache)
+   * @param {string} key
+   */
+  remove(key) {
+    return this._removeItem(key);
   }
 
   // --- API Key Management ---
@@ -229,17 +238,18 @@ export class StorageService {
   }
 
   clearCache() {
+    const storage = this._getStorage();
     try {
-      if (this._storage) {
+      if (storage) {
         const keysToRemove = [];
-        for (let i = 0; i < this._storage.length; i++) {
-          const k = this._storage.key(i);
+        for (let i = 0; i < storage.length; i++) {
+          const k = storage.key(i);
           if (k && (k.startsWith(STORAGE_KEYS.CACHE_PREFIX) || k.startsWith('cache_') || k.startsWith('transporter_cache_'))) {
             keysToRemove.push(k);
           }
         }
         for (const k of keysToRemove) {
-          this._storage.removeItem(k);
+          storage.removeItem(k);
         }
       }
     } catch {

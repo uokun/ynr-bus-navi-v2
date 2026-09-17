@@ -65,7 +65,10 @@ export function renderMainTransfer(containerOrState, maybeData = null) {
 
     // Minimal compact header with clean SVG direction swap button
     let html = `
-      <div style="display:flex; justify-content:flex-end; align-items:center; margin-bottom:8px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <button id="btn-geo-transfer" class="direction-switch-pill" style="display:inline-flex; align-items:center; gap:6px; padding:6px 12px; font-size:0.82rem; font-weight:700; background:var(--surface-color); color:var(--text-main); border:1px solid var(--border-color); border-radius:var(--radius-pill); cursor:pointer;">
+          <span>📍 現在地</span>
+        </button>
         <button id="btn-swap-direction" class="direction-switch-pill" style="display:inline-flex; align-items:center; gap:6px; padding:6px 14px; font-size:0.82rem; font-weight:700; background:var(--surface-color); color:var(--primary-color); border:1px solid var(--border-color); border-radius:var(--radius-pill); cursor:pointer;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
             <path d="M7 16V4M7 4L3 8M7 4L11 8M17 8V20M17 20L21 16M17 20L13 16"/>
@@ -75,8 +78,27 @@ export function renderMainTransfer(containerOrState, maybeData = null) {
       </div>
     `;
 
-    if (status === 'error' || status === 'no_api_key' || !recommended) {
-      const isApiKeyMissing = (status === 'no_api_key' || !data.hasApiKey);
+    // 1. APIキー未設定案内
+    const isApiKeyMissing = (status === 'no_api_key' || !data.hasApiKey);
+    if (isApiKeyMissing) {
+      html += `
+        <div class="card api-key-required-card" style="padding:28px 20px; text-align:center; margin-top:12px; border:1px solid var(--border-color); background:var(--surface-color); border-radius:var(--radius-lg);">
+          <div style="font-size:2.4rem; margin-bottom:12px;">⚠️</div>
+          <h3 style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin-bottom:8px;">APIキーを設定してください</h3>
+          <p style="font-size:0.85rem; color:var(--text-sub); line-height:1.5; margin-bottom:20px; max-width:340px; margin-left:auto; margin-right:auto;">
+            公共交通オープンデータ（ODPT）APIキーが設定されていないため、運行情報・時刻表を取得できません。
+          </p>
+          <button class="btn-primary-large btn-goto-settings" onclick="if(window.app) window.app.switchTab('view-settings');" style="max-width:240px; margin:0 auto; padding:12px 20px; font-size:0.9rem; font-weight:700;">
+            ⚙️ 設定画面を開く
+          </button>
+        </div>
+      `;
+      container.innerHTML = html;
+      return;
+    }
+
+    // 2. 時刻表データ取得エラー
+    if (status === 'error') {
       html += `
         <div class="card" style="padding:24px 16px; text-align:center; margin-top:12px; border:1px solid var(--border-color); background:var(--surface-color);">
           <div style="font-size:2rem; margin-bottom:8px;">⚠️</div>
@@ -84,13 +106,34 @@ export function renderMainTransfer(containerOrState, maybeData = null) {
             時刻表データを取得できませんでした
           </div>
           <p style="font-size:0.82rem; color:var(--text-sub); line-height:1.4; margin-bottom:16px;">
-            ${isApiKeyMissing 
-              ? 'ODPT APIキーが設定されていないため、運行情報・時刻表を取得できません。設定タブよりAPIキーを入力してください。' 
-              : 'ODPT APIからの時刻表データ取得に失敗したか、運行データが存在しません。通信状態または設定のAPIキーをご確認ください。'}
+            ODPT APIからの時刻表データ取得に失敗したか、運行データが存在しません。通信状態または設定のAPIキーをご確認ください。
           </p>
-          <button class="btn-primary-large" onclick="if(window.app) window.app.switchTab('view-settings');" style="max-width:240px; margin:0 auto; padding:10px 16px; font-size:0.85rem;">
-            設定画面を開く
+          <button class="btn-primary-large btn-goto-settings" onclick="if(window.app) window.app.switchTab('view-settings');" style="max-width:240px; margin:0 auto; padding:10px 16px; font-size:0.85rem;">
+            ⚙️ 設定画面を開く
           </button>
+        </div>
+      `;
+      container.innerHTML = html;
+      return;
+    }
+
+    // 3. 当日運行終了 (時刻表はあるが現在以降の直通乗り継ぎ便が0件)
+    if (!recommended) {
+      html += `
+        <div class="card end-of-service-card" style="padding:28px 20px; text-align:center; margin-top:12px; border:1px solid var(--border-color); background:var(--surface-color); border-radius:var(--radius-lg);">
+          <div style="font-size:2.2rem; margin-bottom:10px;">🌙</div>
+          <div style="font-size:1.1rem; font-weight:800; color:var(--text-main); margin-bottom:8px;">
+            本日の運行は終了しました
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-sub); line-height:1.5; margin-bottom:16px;">
+            本日の直通乗り継ぎ便はすべて終了いたしました。<br>
+            各停留所の翌朝始発時刻は「停留所」タブよりご確認いただけます。
+          </p>
+          <div style="display:flex; justify-content:center; gap:8px;">
+            <button class="btn-primary-outline" onclick="if(window.app) window.app.switchTab('view-stops');" style="padding:8px 16px; font-size:0.85rem; border-radius:var(--radius-pill);">
+              🚏 停留所別時刻表
+            </button>
+          </div>
         </div>
       `;
       container.innerHTML = html;

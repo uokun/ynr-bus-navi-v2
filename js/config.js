@@ -57,11 +57,13 @@ export const STOPS = {
     id: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1',
     sameAs: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1',
     idInbound: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.1',
+    idOutbound: 'odpt.BusstopPole:YokohamaMunicipal.Koizumi.1810.2',
     name: '古泉',
     nameEn: 'Koizumi',
     nameKana: 'こいずみ',
     poleNumber: '1',
     inboundPoleNumber: '1',
+    outboundPoleNumber: '2',
     routes: ['133'],
     lat: 35.4215,
     long: 139.6152
