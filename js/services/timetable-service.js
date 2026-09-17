@@ -43,15 +43,49 @@ export class TimetableService {
    * Formats countdown text and status given difference in minutes/seconds.
    * @param {number} diffMinutes
    * @param {number} [diffSeconds]
-   * @returns {{ text: string, status: 'urgent' | 'soon' | 'normal' | 'past', badgeClass: string }}
+   * @param {Object} [locationStatus] リアルタイム走行状態 ({ status, stopsAway, ... })
+   * @returns {{ text: string, shortText?: string, status: 'urgent' | 'soon' | 'normal' | 'past', badgeClass: string }}
    */
-  formatCountdown(diffMinutes, diffSeconds = null) {
+  formatCountdown(diffMinutes, diffSeconds = null, locationStatus = null) {
     const totalSec = diffSeconds !== null ? diffSeconds : Math.round(diffMinutes * 60);
     const mins = Math.floor(totalSec / 60);
+
+    // リアルタイム位置情報があり、バスがまだ停留所手前にある場合は「発車直後」を完全に抑止
+    if (locationStatus && (locationStatus.status === 'at_stop' || locationStatus.status === 'approaching' || locationStatus.status === 'en_route')) {
+      if (locationStatus.status === 'at_stop') {
+        return {
+          text: '停車中',
+          shortText: '停車中',
+          status: 'urgent',
+          badgeClass: 'badge-urgent'
+        };
+      }
+      if (locationStatus.status === 'approaching' || locationStatus.stopsAway === 1) {
+        return {
+          text: 'まもなく到着',
+          shortText: 'まもなく',
+          status: 'urgent',
+          badgeClass: 'badge-soon'
+        };
+      }
+      if (locationStatus.status === 'en_route') {
+        const away = typeof locationStatus.stopsAway === 'number' ? locationStatus.stopsAway : null;
+        if (totalSec <= 0) {
+          // 所定時刻を経過しているがまだ手前を走行中（遅延中）
+          return {
+            text: away ? `遅延 接近中 (あと${away}駅)` : '遅延 接近中',
+            shortText: away ? `あと${away}駅` : '接近中',
+            status: 'soon',
+            badgeClass: 'badge-soon'
+          };
+        }
+      }
+    }
 
     if (totalSec < -120) {
       return {
         text: '発車済み',
+        shortText: '発車済',
         status: 'past',
         badgeClass: 'badge-past'
       };
@@ -59,6 +93,7 @@ export class TimetableService {
     if (totalSec < 0) {
       return {
         text: '発車直後',
+        shortText: '直後',
         status: 'urgent',
         badgeClass: 'badge-urgent'
       };
@@ -71,6 +106,7 @@ export class TimetableService {
       const sStr = String(s).padStart(2, '0');
       return {
         text: `T-${mStr}:${sStr}`,
+        shortText: `${mStr}:${sStr}`,
         status: m <= 5 ? 'soon' : 'normal',
         badgeClass: m <= 5 ? 'badge-soon' : 'badge-normal'
       };
@@ -85,12 +121,13 @@ export class TimetableService {
     const sStr = String(s).padStart(2, '0');
     return {
       text: `T-${hStr}:${mStr}:${sStr}`,
+      shortText: `${hStr}:${mStr}:${sStr}`,
       status: 'normal',
       badgeClass: 'badge-normal'
     };
   }
 
-  calculateCountdown(depTimeStr, now = new Date()) {
+  calculateCountdown(depTimeStr, now = new Date(), locationStatus = null) {
     if (!depTimeStr) return { text: '', status: 'none', badgeClass: '' };
     const depMin = this.timeStringToMinutes(depTimeStr);
     const nowMin = now.getHours() * 60 + now.getMinutes();
@@ -99,7 +136,7 @@ export class TimetableService {
     if (nowMin >= 22 * 60 && depMin < 4 * 60) diffSec += 86400;
     else if (nowMin < 4 * 60 && depMin >= 22 * 60) diffSec -= 86400;
     const diffMin = Math.floor(diffSec / 60);
-    return this.formatCountdown(diffMin, diffSec);
+    return this.formatCountdown(diffMin, diffSec, locationStatus);
   }
 
   /**
@@ -201,7 +238,7 @@ export class TimetableService {
       // Even if active, drop ancient ghost trips older than 15 minutes
       if (diffSec < -900) continue;
 
-      const countdown = this.formatCountdown(diffMin, diffSec);
+      const countdown = this.formatCountdown(diffMin, diffSec, item.locationStatus);
       results.push({
         ...item,
         diffMinutes: diffMin,
@@ -245,6 +282,9 @@ export class TimetableService {
         };
       });
     }
+
+    const now = new Date();
+    const nowMin = now.getHours() * 60 + now.getMinutes();
 
     const matchedLiveBuses = new Set();
     const entryMatches = new Map(); // entryIndex -> liveBus
@@ -305,10 +345,6 @@ export class TimetableService {
       const routeLineMatch = routeStr.match(/\.(\d{2,3})(?:\.|$)/) || routeStr.match(/(\d{2,3})系統/) || routeStr.match(/(\d{2,3})/);
       const liveLineNum = routeLineMatch ? routeLineMatch[1] : null;
       if (!liveLineNum) continue;
-
-      // Determine current time in minutes for estimated arrival alignment
-      const now = new Date();
-      const nowMin = now.getHours() * 60 + now.getMinutes();
 
       let bestEntryIdx = -1;
       let minTimeDiff = Infinity;
@@ -387,14 +423,12 @@ export class TimetableService {
     return timetableEntries.map((entry, idx) => {
       const matchedBus = entryMatches.get(idx) || null;
 
-      const delaySeconds = (matchedBus && typeof matchedBus['odpt:delay'] === 'number')
+      let delaySeconds = (matchedBus && typeof matchedBus['odpt:delay'] === 'number')
         ? matchedBus['odpt:delay']
         : (entry.delaySeconds || 0);
 
-      const delayMinutes = Math.round(delaySeconds / 60);
+      let delayMinutes = Math.round(delaySeconds / 60);
       const schedMin = this.timeStringToMinutes(entry.departureTime);
-      const actualMin = schedMin + delayMinutes;
-      const actualDepTime = this.minutesToTimeString(actualMin);
 
       const pole = targetPoleId || entry.targetPoleId || entry.poleId || entry.fromPole || entry.destination || '';
       const pattern = routePatternId || entry.routePatternId || entry.line || (matchedBus ? matchedBus['odpt:busroutePattern'] : '');
@@ -405,6 +439,37 @@ export class TimetableService {
         pattern,
         { direction: entry.direction, destination: entry.destination }
       );
+
+      // バスがまだ手前（en_route / approaching / at_stop）にいる場合、
+      // かつ、所定発車時刻が現在時刻の近傍（±35分以内）である場合に限り、
+      // 手前停留所数に基づく推定所要時間（1駅約1.5〜2分）から推定到着時刻を算出。
+      // 所定時刻を経過している場合、実質遅延（effectiveDelayMinutes）を自動加算。
+      const isNearCurrentTime = Math.abs(schedMin - nowMin) <= 35;
+      if (isNearCurrentTime && locationStatus && (locationStatus.status === 'at_stop' || locationStatus.status === 'approaching' || locationStatus.status === 'en_route')) {
+        let estimatedArrival = nowMin;
+        if (locationStatus.status === 'at_stop') {
+          estimatedArrival = nowMin;
+        } else if (locationStatus.status === 'approaching' || locationStatus.stopsAway === 1) {
+          estimatedArrival = nowMin + 1;
+        } else if (typeof locationStatus.stopsAway === 'number' && locationStatus.stopsAway >= 2) {
+          estimatedArrival = nowMin + Math.max(1, Math.round(locationStatus.stopsAway * 2));
+        }
+
+        // 所定発車時刻よりも推定到着時刻が遅い場合、実質遅延として反映
+        if (estimatedArrival > schedMin) {
+          const estimatedDelay = estimatedArrival - schedMin;
+          if (estimatedDelay > delayMinutes && estimatedDelay <= 30) {
+            delayMinutes = estimatedDelay;
+            delaySeconds = estimatedDelay * 60;
+            // locationStatus 側の遅延表記も同期
+            locationStatus.delayMinutes = delayMinutes;
+            locationStatus.delayText = `+${delayMinutes}分遅れ`;
+          }
+        }
+      }
+
+      const actualMin = schedMin + delayMinutes;
+      const actualDepTime = this.minutesToTimeString(actualMin);
 
       return {
         ...entry,

@@ -967,11 +967,24 @@ export class App {
 
         const diffMin = Math.floor(diffSec / 60);
 
-        if (diffSec < -120) {
+        const status = item.dataset.status;
+        const stopsAway = item.dataset.stopsAway;
+        const locationStatusStub = status ? {
+          status,
+          stopsAway: (stopsAway !== undefined && stopsAway !== '') ? Number(stopsAway) : null
+        } : null;
+
+        const isStillActive = locationStatusStub && (
+          locationStatusStub.status === 'at_stop' ||
+          locationStatusStub.status === 'approaching' ||
+          (locationStatusStub.status === 'en_route' && (locationStatusStub.stopsAway === null || locationStatusStub.stopsAway <= 3))
+        );
+
+        if (diffSec < -120 && !isStillActive) {
           needsFullRefresh = true;
         }
 
-        const countdown = timetableService.formatCountdown(diffMin, diffSec);
+        const countdown = timetableService.formatCountdown(diffMin, diffSec, locationStatusStub);
         
         const cdValEl = item.querySelector('.countdown-val') || item.querySelector('.dep-countdown');
         if (cdValEl && cdValEl.textContent !== countdown.text) {

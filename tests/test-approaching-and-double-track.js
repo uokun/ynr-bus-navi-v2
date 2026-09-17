@@ -8,6 +8,7 @@ import { busLocationService } from '../js/services/bus-location-service.js';
 import { stepTimelineComponent } from '../js/ui/step-timeline.js';
 import { renderStopViews } from '../js/ui/render-stop-view.js';
 import { renderRouteMapView } from '../js/ui/render-route-map.js';
+import { timetableService } from '../js/services/timetable-service.js';
 
 let totalTests = 0;
 let passedTests = 0;
@@ -272,6 +273,47 @@ assert(syncedApproaching.status === 'en_route', 'Approaching bar status matches 
 assert(syncedApproaching.stopsAway === 2, 'Approaching bar stopsAway matches firstDep');
 assert(syncedApproaching.fromStopName === '洋光台駅前', 'Approaching bar fromStopName matches firstDep');
 assert(syncedApproaching.toStopName === '西公園前', 'Approaching bar toStopName matches firstDep');
+
+console.log('\n=== Step 7: Elimination of False "Just Departed" (発車直後) When Bus Still En-Route ===');
+
+// 1. Bus is 2 stops away but scheduled time has elapsed (-45s) -> Must NOT show '発車直後'
+const delayed2StopsStatus = {
+  status: 'en_route',
+  stopsAway: 2,
+  fromStopName: '滝頭地域ケアプラザ前',
+  toStopName: '仲之町'
+};
+const cdDelayed2Stops = timetableService.formatCountdown(0, -45, delayed2StopsStatus);
+assert(cdDelayed2Stops.text !== '発車直後', 'Diff -45s with bus 2 stops away is NOT 発車直後');
+assert(cdDelayed2Stops.text.includes('接近中') && cdDelayed2Stops.text.includes('あと2駅'), 'Diff -45s with bus 2 stops away displays 遅延 接近中 (あと2駅)');
+assert(cdDelayed2Stops.badgeClass === 'badge-soon', 'Delayed approaching badge class is badge-soon');
+
+// 2. Bus is approaching (1 stop away) and scheduled time has elapsed (-30s) -> 'まもなく到着'
+const approachingStatus = {
+  status: 'approaching',
+  stopsAway: 1
+};
+const cdApproaching = timetableService.formatCountdown(0, -30, approachingStatus);
+assert(cdApproaching.text === 'まもなく到着', 'Diff -30s with approaching bus displays まもなく到着');
+
+// 3. Bus is at_stop and scheduled time has elapsed (-10s) -> '停車中'
+const atStopStatus = {
+  status: 'at_stop',
+  stopsAway: 0
+};
+const cdAtStop = timetableService.formatCountdown(0, -10, atStopStatus);
+assert(cdAtStop.text === '停車中', 'Diff -10s with bus at stop displays 停車中');
+
+// 4. Backward compatibility: When no locationStatus (or passed), normal '発車直後' is preserved
+const cdNoStatus = timetableService.formatCountdown(0, -30, null);
+assert(cdNoStatus.text === '発車直後', 'Diff -30s with no location status preserves 発車直後');
+
+const cdPassed = timetableService.formatCountdown(0, -30, { status: 'passed' });
+assert(cdPassed.text === '発車直後', 'Diff -30s with passed bus preserves 発車直後');
+
+// 5. Hero card and sub items contain data-status and data-stops-away attributes
+assert(stopContainer.innerHTML.includes('data-status="en_route"'), 'Hero card contains data-status="en_route"');
+assert(stopContainer.innerHTML.includes('data-stops-away="2"'), 'Hero card contains data-stops-away="2"');
 
 console.log('\n==================================================');
 console.log(`Summary: ${passedTests} Passed, ${failedTests} Failed (Total: ${totalTests})`);

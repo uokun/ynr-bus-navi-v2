@@ -192,7 +192,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
         const firstMiniLocHtml = stepTimelineComponent.renderMini(firstDep.locationStatus);
 
         firstHeroHtml = `
-          <div class="card stop-hero-card departure-item" data-dep-time="${escapeHtml(actualDepTime)}">
+          <div class="card stop-hero-card departure-item" data-dep-time="${escapeHtml(actualDepTime)}" data-status="${escapeHtml(firstDep.locationStatus?.status || '')}" data-stops-away="${escapeHtml(String(firstDep.locationStatus?.stopsAway ?? ''))}">
             <div class="hero-top-row">
               <span class="hero-label">先発便</span>
               <span class="delay-badge ${escapeHtml(delayBadgeClass)}">${escapeHtml(delayBadgeText)}</span>
@@ -235,7 +235,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
           const miniLocHtml = stepTimelineComponent.renderMini(dep.locationStatus);
 
           return `
-            <div class="sub-departure-item departure-item" data-dep-time="${escapeHtml(actualDep)}">
+            <div class="sub-departure-item departure-item" data-dep-time="${escapeHtml(actualDep)}" data-status="${escapeHtml(dep.locationStatus?.status || '')}" data-stops-away="${escapeHtml(String(dep.locationStatus?.stopsAway ?? ''))}">
               <div class="sub-dep-header">
                 <div class="sub-dep-left">
                   <span class="sub-dep-time">${escapeHtml(dep.departureTime)}</span>

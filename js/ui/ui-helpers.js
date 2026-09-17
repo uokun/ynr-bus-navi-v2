@@ -58,9 +58,41 @@ export function formatTime(input, includeSeconds = false) {
  * @param {number|null} [diffSeconds=null] 
  * @returns {{ text: string, shortText: string, status: 'urgent'|'soon'|'normal'|'past', badgeClass: string }}
  */
-export function formatCountdown(diffMinutes, diffSeconds = null) {
+export function formatCountdown(diffMinutes, diffSeconds = null, locationStatus = null) {
   const totalSec = diffSeconds !== null ? diffSeconds : Math.round(diffMinutes * 60);
   const mins = Math.floor(totalSec / 60);
+
+  // リアルタイム位置情報があり、バスがまだ停留所手前にある場合は「発車直後」を完全に抑止
+  if (locationStatus && (locationStatus.status === 'at_stop' || locationStatus.status === 'approaching' || locationStatus.status === 'en_route')) {
+    if (locationStatus.status === 'at_stop') {
+      return {
+        text: '停車中',
+        shortText: '停車中',
+        status: 'urgent',
+        badgeClass: 'badge-urgent'
+      };
+    }
+    if (locationStatus.status === 'approaching' || locationStatus.stopsAway === 1) {
+      return {
+        text: 'まもなく到着',
+        shortText: 'まもなく',
+        status: 'urgent',
+        badgeClass: 'badge-soon'
+      };
+    }
+    if (locationStatus.status === 'en_route') {
+      const away = typeof locationStatus.stopsAway === 'number' ? locationStatus.stopsAway : null;
+      if (totalSec <= 0) {
+        // 所定時刻を経過しているがまだ手前を走行中（遅延中）
+        return {
+          text: away ? `遅延 接近中 (あと${away}駅)` : '遅延 接近中',
+          shortText: away ? `あと${away}駅` : '接近中',
+          status: 'soon',
+          badgeClass: 'badge-soon'
+        };
+      }
+    }
+  }
 
   if (totalSec < -120) {
     return {
