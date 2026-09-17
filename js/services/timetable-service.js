@@ -423,7 +423,8 @@ export class TimetableService {
     return timetableEntries.map((entry, idx) => {
       const matchedBus = entryMatches.get(idx) || null;
 
-      let delaySeconds = (matchedBus && typeof matchedBus['odpt:delay'] === 'number')
+      const hasOfficialDelay = (matchedBus && typeof matchedBus['odpt:delay'] === 'number');
+      let delaySeconds = (hasOfficialDelay)
         ? matchedBus['odpt:delay']
         : (entry.delaySeconds || 0);
 
@@ -442,23 +443,31 @@ export class TimetableService {
 
       // バスがまだ手前（en_route / approaching / at_stop）にいる場合、
       // かつ、所定発車時刻が現在時刻の近傍（±35分以内）である場合に限り、
-      // 手前停留所数に基づく推定所要時間（1駅約1.5〜2分）から推定到着時刻を算出。
-      // 所定時刻を経過している場合、実質遅延（effectiveDelayMinutes）を自動加算。
+      // 手前停留所数に基づく推定所要時間（1駅あたり約1.0〜1.1分程度）から推定到着時刻を算出。
+      // ※1駅2分だと都市部の近接停留所間で遅延が過大見積もりになるため、実走値にチューニング。
       const isNearCurrentTime = Math.abs(schedMin - nowMin) <= 35;
       if (isNearCurrentTime && locationStatus && (locationStatus.status === 'at_stop' || locationStatus.status === 'approaching' || locationStatus.status === 'en_route')) {
-        let estimatedArrival = nowMin;
+        let estimatedMinutesAway = 0;
         if (locationStatus.status === 'at_stop') {
-          estimatedArrival = nowMin;
+          estimatedMinutesAway = 0;
         } else if (locationStatus.status === 'approaching' || locationStatus.stopsAway === 1) {
-          estimatedArrival = nowMin + 1;
+          estimatedMinutesAway = 1;
         } else if (typeof locationStatus.stopsAway === 'number' && locationStatus.stopsAway >= 2) {
-          estimatedArrival = nowMin + Math.max(1, Math.round(locationStatus.stopsAway * 2));
+          // 2駅手前: 約2分、3駅手前: 約3分、4駅手前: 約4分 (1駅あたり約1.1分)
+          estimatedMinutesAway = Math.max(1, Math.round(locationStatus.stopsAway * 1.1));
         }
 
-        // 所定発車時刻よりも推定到着時刻が遅い場合、実質遅延として反映
-        if (estimatedArrival > schedMin) {
+        const estimatedArrival = nowMin + estimatedMinutesAway;
+
+        // 公式遅延がすでに存在し、現在時刻が遅延見込み時刻の前であれば公式遅延を尊重
+        const officialActualMin = schedMin + delayMinutes;
+        if (hasOfficialDelay && officialActualMin >= nowMin) {
+          // 公式遅延で十分説明がつく場合は公式遅延を維持
+        } else if (estimatedArrival > schedMin) {
+          // 所定時刻を経過している、または公式遅延が未更新（0秒）のまま現在時刻を過ぎた場合のみ、
+          // 現実的な推定到着時刻との差分を実効遅延として適用（過大加算を防止し上限20分）
           const estimatedDelay = estimatedArrival - schedMin;
-          if (estimatedDelay > delayMinutes && estimatedDelay <= 30) {
+          if (estimatedDelay > delayMinutes && estimatedDelay <= 20) {
             delayMinutes = estimatedDelay;
             delaySeconds = estimatedDelay * 60;
             // locationStatus 側の遅延表記も同期
