@@ -77,6 +77,11 @@ export function renderStopViews(containerOrState, maybeData = null) {
   const calType = data.calType || calendarService.getCalendarType(new Date());
   const filter = data.activeFilter || data.filter || (typeof window !== 'undefined' && window.app?.state?.getState().activeFilter) || 'all';
 
+  const stopName = STOP_DISPLAY_NAMES[activeStopKey] || '洋光台北口';
+  const platforms = STOP_PLATFORMS[activeStopKey] || STOP_PLATFORMS.yokodai;
+  const currentPlatform = platforms.find(p => String(p.pole) === String(activePole)) || platforms[0];
+  const targetPoleId = currentPlatform?.poleId || '7800.1';
+
   let departures = data.departures;
 
   if (!departures) {
@@ -91,22 +96,20 @@ export function renderStopViews(containerOrState, maybeData = null) {
           ttList = data.timetables.line133Outbound || [];
         }
       } else if (activeStopKey === 'koizumi') {
-        ttList = data.timetables.line133Inbound || [];
+        if (activePole === '2') {
+          ttList = data.timetables.line133Outbound || [];
+        } else {
+          ttList = data.timetables.line133Inbound || [];
+        }
       }
     }
     const filtered = timetableService.filterTimetable(ttList, { route: filter });
-    const merged = timetableService.mergeRealtimeDelays(filtered, data.realtimeBuses || [], '7800.1');
+    const merged = timetableService.mergeRealtimeDelays(filtered, data.realtimeBuses || [], targetPoleId);
     departures = timetableService.getNextDepartures(merged, new Date(), 8);
     if (!container && (!departures || departures.length === 0) && filtered.length > 0) {
       departures = filtered.slice(0, 5);
     }
   }
-
-  departures = departures || [];
-
-  const stopName = STOP_DISPLAY_NAMES[activeStopKey] || '洋光台北口';
-  const platforms = STOP_PLATFORMS[activeStopKey] || STOP_PLATFORMS.yokodai;
-  const currentPlatform = platforms.find(p => String(p.pole) === String(activePole)) || platforms[0];
 
   // If container is provided, render full mobile stop UI
   if (container) {

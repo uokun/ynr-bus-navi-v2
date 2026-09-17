@@ -298,8 +298,15 @@ export class TimetableService {
       const liveLineNum = routeLineMatch ? routeLineMatch[1] : null;
       if (!liveLineNum) continue;
 
+      // Determine current time in minutes for estimated arrival alignment
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes();
+
       let bestEntryIdx = -1;
       let minTimeDiff = Infinity;
+
+      // Calculate bus location status against target pole
+      const defaultTargetPole = targetPoleId || '';
 
       timetableEntries.forEach((entry, idx) => {
         if (!entry || entryMatches.has(idx)) return;
@@ -325,10 +332,37 @@ export class TimetableService {
           }
         }
 
+        const pole = defaultTargetPole || entry.targetPoleId || entry.poleId || entry.fromPole || '';
+        const pattern = routePatternId || entry.routePatternId || entry.line || b['odpt:busroutePattern'] || '';
+        const locStatus = busLocationService.getBusLocationStatus(
+          b,
+          pole,
+          pattern,
+          { direction: entry.direction, destination: entry.destination }
+        );
+
+        // Do not match buses that have already passed this stop to future departure entries
+        if (locStatus.status === 'passed') {
+          return;
+        }
+
         if (entry.departureTime) {
           const entryMin = this.timeStringToMinutes(entry.departureTime);
-          if (entryMin < minTimeDiff) {
-            minTimeDiff = entryMin;
+
+          // Estimate arrival minutes based on stopsAway (approx 1.5 - 2 min per stop) and delay
+          let estimatedArrival = nowMin;
+          if (locStatus.status === 'at_stop') {
+            estimatedArrival = nowMin;
+          } else if (locStatus.status === 'approaching') {
+            estimatedArrival = nowMin + 2;
+          } else if (typeof locStatus.stopsAway === 'number') {
+            estimatedArrival = nowMin + Math.max(1, Math.round(locStatus.stopsAway * 2)) + (locStatus.delayMinutes || 0);
+          }
+
+          // Match closeness between timetable departure time and estimated arrival time
+          const diff = Math.abs(entryMin - estimatedArrival);
+          if (diff < minTimeDiff && diff <= 35) { // within 35 minutes tolerance
+            minTimeDiff = diff;
             bestEntryIdx = idx;
           }
         } else if (bestEntryIdx === -1) {

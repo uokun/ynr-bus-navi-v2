@@ -56,10 +56,10 @@ console.log('\n--- 2. Full JR-Style Step Timeline Rendering (render) ---');
     'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.111.Vehicle4418',
     'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Yoshihara.7816.1',
     'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KonankuSogoChoshamae.1827.1',
-    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11101.10_1',
     'odpt:delay': 180
   };
-  const status = busLocationService.getBusLocationStatus(liveBus, 'KamiookaStation', '111系統');
+  const status = busLocationService.getBusLocationStatus(liveBus, 'KamiookaStation', '111系統', { destination: '上大岡駅前' });
   const html = stepTimelineComponent.render(status);
 
   assert(html.includes('jr-step-timeline-container'), 'Contains root container class');
@@ -82,10 +82,10 @@ console.log('\n--- 2. Full JR-Style Step Timeline Rendering (render) ---');
     'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.111.Vehicle4412',
     'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Sekinoshita.2604.1',
     'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6',
-    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11101.10_1',
     'odpt:delay': 0
   };
-  const status = busLocationService.getBusLocationStatus(approachingBus, 'KamiookaStation', '111系統');
+  const status = busLocationService.getBusLocationStatus(approachingBus, 'KamiookaStation', '111系統', { destination: '上大岡駅前' });
   const html = stepTimelineComponent.render(status);
 
   assert(html.includes('status-approaching'), 'Container has status-approaching modifier');
@@ -100,10 +100,10 @@ console.log('\n--- 2. Full JR-Style Step Timeline Rendering (render) ---');
     'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.111.Vehicle4405',
     'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6',
     'odpt:toBusstopPole': '',
-    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11101.10_1',
     'odpt:delay': 60
   };
-  const status = busLocationService.getBusLocationStatus(atStopBus, 'KamiookaStation', '111系統');
+  const status = busLocationService.getBusLocationStatus(atStopBus, 'KamiookaStation', '111系統', { destination: '上大岡駅前' });
   const html = stepTimelineComponent.render(status);
 
   assert(html.includes('status-at_stop'), 'Container has status-at_stop modifier');
@@ -141,31 +141,27 @@ console.log('\n--- 3. Mini Location Badge Rendering (renderMini) ---');
 {
   const liveBus = {
     'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.133.Vehicle2890',
-    'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Tenjinmae.3609.1',
-    'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Okamuracho.827.1',
-    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.13303.10_1',
+    'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.TakigashiraCommunityCarePlaza.3049.2',
+    'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Nakanocho.2603.1',
+    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.13300.10_1',
     'odpt:delay': 120
   };
-  const status = busLocationService.getBusLocationStatus(liveBus, 'Koizumi', '133系統');
+  const status = busLocationService.getBusLocationStatus(liveBus, 'Koizumi', '133系統', { destination: '上大岡駅前' });
   const miniHtml = stepTimelineComponent.renderMini(status);
 
   assert(miniHtml.includes('mini-bus-location live'), 'Mini badge has mini-bus-location live classes');
   assert(miniHtml.includes('role="status"'), 'Mini badge has role="status"');
   assert(miniHtml.includes('pulsing'), 'Bus icon has pulsing animation class');
-  assert(miniHtml.includes('2個前'), 'Mini badge text displays 2個前');
+  assert(miniHtml.includes('2駅'), 'Mini badge text displays 2駅');
   assert(miniHtml.includes('+2分遅れ'), 'Mini badge displays delay badge text');
   assert(miniHtml.includes('delay-some'), 'Mini badge has delay-some class');
 }
 
-// 3.2 Scheduled Bus Mini Badge
+// 3.2 Scheduled Bus Mini Badge (returns empty string to keep UI clean)
 {
   const scheduledStatus = busLocationService.getBusLocationStatus(null, 'Koizumi', '133系統');
   const miniHtml = stepTimelineComponent.renderMini(scheduledStatus);
-
-  assert(miniHtml.includes('mini-bus-location scheduled'), 'Mini badge has scheduled class');
-  assert(miniHtml.includes('運行予定（定刻見込み）'), 'Mini badge displays scheduled status text');
-  assert(miniHtml.includes('delay-none'), 'Mini badge has delay-none class');
-  assert(miniHtml.includes('🕒'), 'Mini badge uses clock icon for scheduled');
+  assert(miniHtml === '', 'Scheduled bus produces empty mini badge');
 }
 
 // 3.3 Null / Undefined Mini Badge
@@ -192,7 +188,7 @@ console.log('\n--- 4. TimetableService mergeRealtimeDelays with LocationStatus -
       'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.111.Vehicle4412',
       'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Sekinoshita.2604.1',
       'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KamiookaStation.1046.6',
-      'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+      'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11101.10_1',
       'odpt:delay': 0
     },
     {
@@ -200,7 +196,7 @@ console.log('\n--- 4. TimetableService mergeRealtimeDelays with LocationStatus -
       'owl:sameAs': 'odpt.Bus:YokohamaMunicipal.111.Vehicle4418',
       'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Yoshihara.7816.1',
       'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KonankuSogoChoshamae.1827.1',
-      'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+      'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11101.10_1',
       'odpt:delay': 180
     }
   ];
@@ -237,11 +233,12 @@ console.log('\n--- 5. Departure & Transfer Card HTML Structure Verification ---'
       {
         'odpt:fromBusstopPole': '7816.1',
         'odpt:toBusstopPole': '1827.1',
-        'odpt:busroutePattern': '11100',
+        'odpt:busroutePattern': '11101',
         'odpt:delay': 180
       },
-      '1046.6',
-      '111系統'
+      'KamiookaStation',
+      '111系統',
+      { destination: '上大岡駅前' }
     )
   };
 
@@ -279,13 +276,14 @@ console.log('\n--- 5. Departure & Transfer Card HTML Structure Verification ---'
 {
   const legStatus = busLocationService.getBusLocationStatus(
     {
-      'odpt:fromBusstopPole': '3609.1',
-      'odpt:toBusstopPole': '827.1',
+      'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Tenjinmae.3609.1',
+      'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.Okamuracho.827.1',
       'odpt:busroutePattern': '13303',
       'odpt:delay': 60
     },
-    '1810.1',
-    '133系統'
+    '1810.2',
+    '133系統',
+    { destination: '根岸駅前' }
   );
 
   const miniHtml = stepTimelineComponent.renderMini(legStatus);
@@ -302,7 +300,7 @@ console.log('\n--- 5. Departure & Transfer Card HTML Structure Verification ---'
 
   assert(routeNodeHtml.includes('route-node'), 'Transfer node has route-node');
   assert(routeNodeHtml.includes('mini-bus-location live'), 'Transfer node embeds mini-bus-location');
-  assert(routeNodeHtml.includes('2個前'), 'Mini badge shows 2個前');
+  assert(routeNodeHtml.includes('あと2駅'), 'Mini badge shows あと2駅');
 }
 
 // =============================================================================

@@ -86,6 +86,59 @@ const terminusBannerHtml = stepTimelineComponent.renderHorizontal5StopProgressBa
 assert(terminusBannerHtml.includes('terminus'), 'Kamiooka HTML contains terminus class');
 assert(terminusBannerHtml.includes('始発停留所'), 'Kamiooka HTML contains 始発停留所 banner');
 
+// Test 4b: Kamiooka Live At-Stop & Approaching Banner
+const kamiookaAtStopStatus = {
+  targetStopName: '上大岡駅前',
+  isTerminus: true,
+  status: 'at_stop',
+  statusText: '乗り場に停車中（ご乗車いただけます）',
+  stopsAway: 0
+};
+const kamiookaAtStopHtml = stepTimelineComponent.renderHorizontal5StopProgressBar(kamiookaAtStopStatus);
+assert(kamiookaAtStopHtml.includes('乗り場に停車中'), 'Kamiooka at-stop HTML renders 乗り場に停車中 banner');
+
+const kamiookaApproachingStatus = {
+  targetStopName: '上大岡駅前',
+  isTerminus: true,
+  status: 'approaching',
+  statusText: 'まもなく乗り場へ入線（手前停留所を走行中）',
+  stopsAway: 1
+};
+const kamiookaApproachingHtml = stepTimelineComponent.renderHorizontal5StopProgressBar(kamiookaApproachingStatus);
+assert(kamiookaApproachingHtml.includes('まもなく入線'), 'Kamiooka approaching HTML renders まもなく入線 banner');
+
+// Test 4c: En-route beyond 5 stops formatting
+const farBusStatus = {
+  targetStopName: '洋光台北口',
+  isTerminus: false,
+  status: 'en_route',
+  statusText: '8個前を走行中',
+  stopsAway: 8,
+  fromStopName: '洋光台五丁目',
+  toStopName: '洋光台駅前',
+  stops: [
+    { name: 'バイパス下', isTarget: false, isCurrent: false, isPassed: false },
+    { name: '洋光台北口', isTarget: true, isCurrent: false, isPassed: false }
+  ]
+};
+const farBusHtml = stepTimelineComponent.renderHorizontal5StopProgressBar(farBusStatus);
+assert(farBusHtml.includes('8停留所手前を走行中'), 'Far bus renders 8停留所手前を走行中');
+assert(farBusHtml.includes('洋光台五丁目'), 'Far bus detail text includes fromStopName 洋光台五丁目');
+
+// Test 4d: Reverse bus direction isolation (downbound 11100 not matching upbound Yokodai)
+const downboundBus = [
+  {
+    '@id': 'bus-111-down',
+    'odpt:busroute': 'odpt.Busroute:YokohamaMunicipal.111',
+    'odpt:busroutePattern': 'odpt.BusroutePattern:YokohamaMunicipal.11100.10_1',
+    'odpt:fromBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.HinoChuoKoenIriguchi.5256.1',
+    'odpt:toBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.YokodaiKitaguchi.7800.2',
+    'odpt:destinationBusstopPole': 'odpt.BusstopPole:YokohamaMunicipal.KonandaiStation.4800.1'
+  }
+];
+const upboundYokodaiStatus = busLocationService.get5StopApproachingStatus(downboundBus, 'yokodai', '1');
+assert(upboundYokodaiStatus.status === 'scheduled', 'Downbound bus 11100 is isolated from upbound Yokodai Pole 1');
+
 console.log('\n=== Step 3: Double Track Route Map Engine Tests ===');
 
 const mockBusesDoubleTrack = [

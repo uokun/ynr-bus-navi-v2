@@ -191,9 +191,11 @@ export const POLE_NAME_MAPPINGS = {
   'TakigashiraCommunityCarePlaza': '滝頭地域ケアプラザ前',
 
   '2288.1': '市電保存館前',
+  '2288.2': '市電保存館前',
   '2288.3': '市電保存館前',
   'TramMuseum': '市電保存館前',
   'ShidenHozonkanmae': '市電保存館前',
+  'ShidenHozonKanMae': '市電保存館前',
 
   '3034.1': '滝頭',
   '3034.2': '滝頭',
@@ -274,6 +276,14 @@ export function getStopNameFromPole(poleId) {
   for (const part of parts) {
     if (POLE_NAME_MAPPINGS[part]) {
       return POLE_NAME_MAPPINGS[part];
+    }
+  }
+
+  // 大文字小文字を無視したPOLE_NAME_MAPPINGS突合
+  const lowerParts = parts.map(p => p.toLowerCase());
+  for (const [key, val] of Object.entries(POLE_NAME_MAPPINGS)) {
+    if (lowerParts.includes(key.toLowerCase())) {
+      return val;
     }
   }
 
@@ -1073,24 +1083,9 @@ export class BusLocationService {
    * }}
    */
   get5StopApproachingStatus(realtimeBuses = [], stopKey = 'yokodai', poleNum = '1') {
-    if (stopKey === 'kamiooka') {
-      return {
-        targetStopName: '上大岡駅前',
-        targetStopKey: 'kamiooka',
-        isTerminus: true,
-        activeBus: null,
-        status: 'scheduled',
-        statusText: '当駅始発',
-        stopsAway: 0,
-        delayMinutes: 0,
-        delayText: '定刻',
-        stops: [],
-        busPosition: { segmentIndex: -1, percent: 0, isAtStop: true, atStopIndex: 0 }
-      };
-    }
-
     const isYokodai = (stopKey === 'yokodai');
-    const isKoizumiPole2 = (!isYokodai && String(poleNum) === '2');
+    const isKamiooka = (stopKey === 'kamiooka');
+    const isKoizumiPole2 = (!isYokodai && !isKamiooka && String(poleNum) === '2');
 
     let targetStopName = '古泉';
     let lineKey = '133';
@@ -1098,14 +1093,35 @@ export class BusLocationService {
     let dir = 'inbound';
     let expectedDest = '上大岡駅前';
     let stopSequence = ['坂下公園前', '滝頭', '市電保存館前', '滝頭地域ケアプラザ前', '仲之町', '古泉'];
+    let isTerminus = false;
 
     if (isYokodai) {
       targetStopName = '洋光台北口';
       lineKey = '111';
-      targetPoleId = '7800.1';
-      dir = 'outbound';
-      expectedDest = '上大岡駅前';
-      stopSequence = ['バイパス下', '洋光台五丁目', '洋光台駅前', '西公園前', '洋光台二丁目', '洋光台北口'];
+      targetPoleId = (String(poleNum) === '2') ? '7800.2' : '7800.1';
+      dir = (String(poleNum) === '2') ? 'inbound' : 'outbound';
+      expectedDest = (String(poleNum) === '2') ? '港南台駅前' : '上大岡駅前';
+      stopSequence = (String(poleNum) === '2')
+        ? ['日野公園墓地入口', '日野中央公園入口', '洋光台北口']
+        : ['バイパス下', '洋光台五丁目', '洋光台駅前', '西公園前', '洋光台二丁目', '洋光台北口'];
+    } else if (isKamiooka) {
+      targetStopName = '上大岡駅前';
+      isTerminus = true;
+      if (String(poleNum) === '6') {
+        // 111系統 港南台行 (上大岡駅前6番のりば始発)
+        lineKey = '111';
+        targetPoleId = '1046.6';
+        dir = 'inbound';
+        expectedDest = '港南台駅前';
+        stopSequence = ['吉原', '新吉原橋', '港南区総合庁舎前', '笹下港南中央通', '関の下', '上大岡駅前'];
+      } else {
+        // 133系統 根岸駅前行 (上大岡駅前12番のりば始発)
+        lineKey = '133';
+        targetPoleId = '1046.12';
+        dir = 'outbound';
+        expectedDest = '根岸駅前';
+        stopSequence = ['向田橋', '越戸橋', '最戸橋', '大岡交番前', '上大岡駅前'];
+      }
     } else if (isKoizumiPole2) {
       targetStopName = '古泉';
       lineKey = '133';
@@ -1130,23 +1146,76 @@ export class BusLocationService {
         const busRouteStr = bus['odpt:busroute'] || bus['odpt:busroutePattern'] || '';
         if (!busRouteStr.includes(lineKey)) continue;
 
-        // 行先チェック
+        const pat = bus['odpt:busroutePattern'] || '';
         const dest = getStopNameFromPole(bus['odpt:destinationBusstopPole'] || bus['odpt:terminalBusstopPole'] || '');
-        if (isKoizumiPole2) {
-          if (dest && dest.includes('上大岡')) {
-            // 上大岡行きは除外（根岸方面行のみ）
-            continue;
+
+        // 系統・パターン番号・行先による厳格な方向隔離チェック
+        if (lineKey === '111') {
+          if (dir === 'outbound') {
+            // 上大岡行 (11101)
+            if (pat.includes('11100')) continue; // 港南台行を除外
+            if (dest && dest.includes('港南台')) continue;
+          } else {
+            // 港南台行 (11100)
+            if (pat.includes('11101')) continue; // 上大岡行を除外
+            if (dest && dest.includes('上大岡')) continue;
           }
-        } else {
-          if (dest && !dest.includes('上大岡') && !dest.includes('磯子')) {
-            // 港南台行きや根岸行きは除外
-            continue;
+        } else if (lineKey === '133') {
+          if (dir === 'inbound') {
+            // 上大岡行 (13300, 13302)
+            if (pat.includes('13301') || pat.includes('13303')) continue; // 根岸行を除外
+            if (dest && dest.includes('根岸')) continue;
+          } else {
+            // 根岸行 (13301, 13303)
+            if (pat.includes('13300') || pat.includes('13302')) continue; // 上大岡行を除外
+            if (dest && dest.includes('上大岡')) continue;
           }
         }
 
-        const status = this.getBusLocationStatus(bus, targetPoleId, lineKey, {
-          direction: dir,
-          destination: expectedDest,
+        // 上大岡駅前（始発）の場合、到着して待機中または手前区間のバスを検出
+        let statusTargetPole = targetPoleId;
+        let statusDir = dir;
+        let statusExpectedDest = expectedDest;
+
+        if (isKamiooka) {
+          // 上大岡到着便（上り）の終点としての上大岡への接近を計算
+          const arrDir = (lineKey === '111') ? 'outbound' : 'inbound';
+          const arrDest = '上大岡駅前';
+          const arrPole = '1046.1';
+          const arrStatus = this.getBusLocationStatus(bus, arrPole, lineKey, {
+            direction: arrDir,
+            destination: arrDest,
+            maxTimelineNodes: 6
+          });
+
+          // 上大岡駅前に停車中または直前接近中
+          if (arrStatus.status === 'at_stop') {
+            closestBus = bus;
+            closestStatus = {
+              ...arrStatus,
+              status: 'at_stop',
+              statusText: '乗り場に停車中（ご乗車いただけます）',
+              stopsAway: 0
+            };
+            break;
+          } else if (arrStatus.status === 'approaching') {
+            if (minStopsAway > 1) {
+              minStopsAway = 1;
+              closestBus = bus;
+              closestStatus = {
+                ...arrStatus,
+                status: 'approaching',
+                statusText: 'まもなく乗り場へ入線（手前停留所を走行中）',
+                stopsAway: 1
+              };
+            }
+          }
+          continue;
+        }
+
+        const status = this.getBusLocationStatus(bus, statusTargetPole, lineKey, {
+          direction: statusDir,
+          destination: statusExpectedDest,
           maxTimelineNodes: 6
         });
 
@@ -1163,6 +1232,22 @@ export class BusLocationService {
 
     // バスが見つからなかった場合はデフォルト予定状態
     if (!closestBus || !closestStatus) {
+      if (isTerminus) {
+        return {
+          targetStopName: '上大岡駅前',
+          targetStopKey: 'kamiooka',
+          isTerminus: true,
+          activeBus: null,
+          status: 'scheduled',
+          statusText: '当駅始発',
+          stopsAway: 0,
+          delayMinutes: 0,
+          delayText: '定刻',
+          stops: [],
+          busPosition: { segmentIndex: -1, percent: 0, isAtStop: true, atStopIndex: 0 }
+        };
+      }
+
       const defaultStatus = this.getBusLocationStatus(null, targetPoleId, lineKey, {
         direction: dir,
         destination: expectedDest,
@@ -1245,10 +1330,12 @@ export class BusLocationService {
     return {
       targetStopName,
       targetStopKey: stopKey,
-      isTerminus: false,
+      isTerminus: isTerminus,
       activeBus: closestBus,
       status: closestStatus.status,
       statusText: closestStatus.statusText,
+      fromStopName: closestStatus.fromStopName || '',
+      toStopName: closestStatus.toStopName || '',
       stopsAway: closestStatus.stopsAway,
       delayMinutes: closestStatus.delayMinutes,
       delayText: closestStatus.delayText,

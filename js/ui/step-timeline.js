@@ -224,11 +224,33 @@ export class StepTimelineComponent {
       delayMinutes = 0,
       delayText = '定刻',
       stops = [],
-      busPosition = { segmentIndex: -1, percent: 50, isAtStop: false, atStopIndex: -1 }
+      busPosition = { segmentIndex: -1, percent: 50, isAtStop: false, atStopIndex: -1 },
+      fromStopName = approachingData.fromStopName || '',
+      toStopName = approachingData.toStopName || ''
     } = approachingData;
 
     // 上大岡駅前（始発）の場合
     if (isTerminus) {
+      if (status === 'at_stop') {
+        return `
+          <div class="h-5stop-container terminus status-at_stop is-live" role="region" aria-label="発車案内: 停車中">
+            <div class="h-terminus-banner" style="background: rgba(16, 185, 129, 0.12); border: 1px solid rgba(16, 185, 129, 0.3);">
+              <span class="h-terminus-badge" style="background: #10b981; color: white;">🚍 乗り場に停車中</span>
+              <span class="h-terminus-text" style="color: var(--text-main); font-weight: 700;">【${escapeHtml(targetStopName)}】乗り場に停車しています。ご乗車いただけます</span>
+            </div>
+          </div>
+        `;
+      }
+      if (status === 'approaching') {
+        return `
+          <div class="h-5stop-container terminus status-approaching is-live" role="region" aria-label="発車案内: まもなく入線">
+            <div class="h-terminus-banner" style="background: rgba(245, 158, 11, 0.12); border: 1px solid rgba(245, 158, 11, 0.3);">
+              <span class="h-terminus-badge" style="background: #f59e0b; color: white;">⚡ まもなく入線</span>
+              <span class="h-terminus-text" style="color: var(--text-main); font-weight: 700;">手前停留所を走行中。まもなく【${escapeHtml(targetStopName)}】乗り場へ到着します</span>
+            </div>
+          </div>
+        `;
+      }
       return `
         <div class="h-5stop-container terminus" role="region" aria-label="発車案内: ${escapeHtml(targetStopName)}始発">
           <div class="h-terminus-banner">
@@ -255,10 +277,18 @@ export class StepTimelineComponent {
       headline = `まもなく【${targetStopName}】に到着`;
       detailText = '次が当停留所です（お近くでお待ちください）';
     } else if (status === 'en_route' && typeof stopsAway === 'number') {
-      headline = `${stopsAway}つ前のバス停付近を走行中`;
-      const curStopName = stops.find(s => s.isCurrent)?.name || '';
-      if (curStopName) {
-        detailText = `現在位置: ${curStopName} 付近 (あと${stopsAway}駅)`;
+      if (stopsAway > 5) {
+        headline = `${stopsAway}停留所手前を走行中`;
+      } else {
+        headline = `${stopsAway}個前のバス停付近を走行中`;
+      }
+
+      if (fromStopName && toStopName) {
+        detailText = `現在位置: 【${fromStopName}】発車 ➔ 【${toStopName}】へ走行中 (あと${stopsAway}駅)`;
+      } else if (fromStopName) {
+        detailText = `現在位置: 【${fromStopName}】付近 (あと${stopsAway}駅)`;
+      } else if (stopsAway > 5) {
+        detailText = `手前区間を順調に運行中（所要 約${Math.round(stopsAway * 2)}分）`;
       }
     } else if (status === 'scheduled') {
       headline = `運行前（所定ダイヤ通り運行見込み）`;
