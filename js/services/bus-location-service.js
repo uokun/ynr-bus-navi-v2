@@ -1082,7 +1082,7 @@ export class BusLocationService {
    *   }
    * }}
    */
-  get5StopApproachingStatus(realtimeBuses = [], stopKey = 'yokodai', poleNum = '1') {
+  get5StopApproachingStatus(realtimeBuses = [], stopKey = 'yokodai', poleNum = '1', preferredDep = null) {
     const isYokodai = (stopKey === 'yokodai');
     const isKamiooka = (stopKey === 'kamiooka');
     const isKoizumiPole2 = (!isYokodai && !isKamiooka && String(poleNum) === '2');
@@ -1140,7 +1140,19 @@ export class BusLocationService {
     let closestStatus = null;
     let minStopsAway = 999;
 
-    if (Array.isArray(realtimeBuses)) {
+    // 先発便（preferredDep）が渡されており、すでに紐づいたバスがある場合はそのバスを直接同期採用
+    if (preferredDep && preferredDep.matchedBus) {
+      closestBus = preferredDep.matchedBus;
+      closestStatus = preferredDep.locationStatus || this.getBusLocationStatus(closestBus, targetPoleId, lineKey, {
+        direction: dir,
+        destination: expectedDest,
+        maxTimelineNodes: 6
+      });
+    } else if (preferredDep && preferredDep.locationStatus && preferredDep.locationStatus.status === 'scheduled') {
+      // 先発便が運行予定（直近のバスがまだ手前にいない）の場合、後続用のバスを割り当てず予定として揃える
+      closestBus = null;
+      closestStatus = null;
+    } else if (Array.isArray(realtimeBuses)) {
       for (const bus of realtimeBuses) {
         if (!bus) continue;
         const busRouteStr = bus['odpt:busroute'] || bus['odpt:busroutePattern'] || '';
@@ -1241,6 +1253,8 @@ export class BusLocationService {
           status: 'scheduled',
           statusText: '当駅始発',
           stopsAway: 0,
+          fromStopName: '',
+          toStopName: '',
           delayMinutes: 0,
           delayText: '定刻',
           stops: [],
@@ -1273,6 +1287,8 @@ export class BusLocationService {
         activeBus: null,
         status: 'scheduled',
         statusText: '運行予定',
+        fromStopName: '',
+        toStopName: '',
         stopsAway: null,
         delayMinutes: 0,
         delayText: '定刻',

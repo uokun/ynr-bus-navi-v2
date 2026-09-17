@@ -213,6 +213,66 @@ assert(mockContainer.innerHTML.includes('map-view-header-card'), 'Rendered route
 assert(mockContainer.innerHTML.includes('map-line-tab'), 'Rendered route map contains line tabs');
 assert(mockContainer.innerHTML.includes('jr-double-track-map-container'), 'Rendered route map contains double track container');
 
+console.log('\n=== Step 6: First Departure & Approaching Bar Full Synchronization Tests ===');
+
+const mockFirstDep = {
+  departureTime: '12:05',
+  actualDepartureTime: '12:05',
+  delayMinutes: 0,
+  line: '111系統',
+  destination: '上大岡駅前 行',
+  countdownText: 'あと5分',
+  matchedBus: {
+    '@id': 'bus-test-sync',
+    'odpt:busroutePattern': '11101',
+    'odpt:fromBusstopPole': '7806.2',
+    'odpt:toBusstopPole': '4223.1',
+    'odpt:delay': 0
+  },
+  locationStatus: {
+    status: 'en_route',
+    statusText: '2個前を走行中',
+    fromStopName: '洋光台駅前',
+    toStopName: '西公園前',
+    stopsAway: 2,
+    delayMinutes: 0,
+    delayText: '定刻'
+  }
+};
+
+// 1. renderStopViews generates Hero Card containing hero-mini-loc
+global.document = {
+  getElementById: () => null,
+  querySelector: () => null,
+  querySelectorAll: () => [],
+  addEventListener: () => {}
+};
+
+const stopContainer = {
+  innerHTML: '',
+  querySelector: () => null,
+  querySelectorAll: () => [],
+  nodeType: 1
+};
+renderStopViews(stopContainer, {
+  activeStopKey: 'yokodai',
+  activePole: '1',
+  departures: [mockFirstDep],
+  realtimeBuses: [],
+  hasApiKey: true
+});
+
+assert(stopContainer.innerHTML.includes('stop-hero-card'), 'Stop view contains stop-hero-card');
+assert(stopContainer.innerHTML.includes('hero-mini-loc'), 'Stop view Hero card embeds hero-mini-loc');
+assert(stopContainer.innerHTML.includes('洋光台駅前〜西公園前間 (あと2駅)'), 'Hero card displays exact live segment and stops away');
+
+// 2. get5StopApproachingStatus synchronizes with firstDep
+const syncedApproaching = busLocationService.get5StopApproachingStatus([], 'yokodai', '1', mockFirstDep);
+assert(syncedApproaching.status === 'en_route', 'Approaching bar status matches firstDep');
+assert(syncedApproaching.stopsAway === 2, 'Approaching bar stopsAway matches firstDep');
+assert(syncedApproaching.fromStopName === '洋光台駅前', 'Approaching bar fromStopName matches firstDep');
+assert(syncedApproaching.toStopName === '西公園前', 'Approaching bar toStopName matches firstDep');
+
 console.log('\n==================================================');
 console.log(`Summary: ${passedTests} Passed, ${failedTests} Failed (Total: ${totalTests})`);
 console.log('==================================================');

@@ -180,7 +180,8 @@ export function renderStopViews(containerOrState, maybeData = null) {
       let firstTimelineHtml = '';
 
       // 手前5停留所の横並び接近プログレスバー (洋光台北口 / 古泉) または始発案内 (上大岡駅前)
-      const approachingData = busLocationService.get5StopApproachingStatus(data.realtimeBuses || [], activeStopKey, activePole);
+      // 先発便（firstDep）の運行状態と完全に連動させる
+      const approachingData = busLocationService.get5StopApproachingStatus(data.realtimeBuses || [], activeStopKey, activePole, firstDep);
       const approachingProgressBarHtml = stepTimelineComponent.renderHorizontal5StopProgressBar(approachingData);
 
       if (firstDep) {
@@ -188,6 +189,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
         const delayBadgeClass = isDelay ? 'delay-some' : 'delay-none';
         const delayBadgeText = isDelay ? `+${firstDep.delayMinutes}分` : '定刻';
         const actualDepTime = firstDep.actualDepartureTime || firstDep.departureTime;
+        const firstMiniLocHtml = stepTimelineComponent.renderMini(firstDep.locationStatus);
 
         firstHeroHtml = `
           <div class="card stop-hero-card departure-item" data-dep-time="${escapeHtml(actualDepTime)}">
@@ -206,6 +208,7 @@ export function renderStopViews(containerOrState, maybeData = null) {
                 <span class="hero-destination">${escapeHtml(firstDep.destination || '上大岡駅前 行')}</span>
               </div>
             </div>
+            ${firstMiniLocHtml ? `<div class="hero-mini-loc" style="margin-top:12px; padding-top:10px; border-top:1px dashed var(--border-color);">${firstMiniLocHtml}</div>` : ''}
           </div>
         `;
 

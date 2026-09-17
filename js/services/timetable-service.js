@@ -190,8 +190,16 @@ export class TimetableService {
 
       const diffMin = Math.floor(diffSec / 60);
 
-      // Exclude departures older than 2 minutes in the past
-      if (diffSec < -120) continue;
+      // Exclude departures older than 2 minutes in the past, UNLESS the bus is currently approaching, at stop, or actively en route to this stop
+      const isBusStillActive = item.locationStatus && (
+        item.locationStatus.status === 'at_stop' ||
+        item.locationStatus.status === 'approaching' ||
+        (item.locationStatus.status === 'en_route' && typeof item.locationStatus.stopsAway === 'number' && item.locationStatus.stopsAway <= 3)
+      );
+
+      if (diffSec < -120 && !isBusStillActive) continue;
+      // Even if active, drop ancient ghost trips older than 15 minutes
+      if (diffSec < -900) continue;
 
       const countdown = this.formatCountdown(diffMin, diffSec);
       results.push({
@@ -405,6 +413,7 @@ export class TimetableService {
         actualDepartureTime: actualDepTime,
         estimatedDepartureTime: actualDepTime,
         locationStatus,
+        matchedBus,
         liveLocation: matchedBus ? {
           lat: matchedBus['geo:lat'],
           long: matchedBus['geo:long'],
